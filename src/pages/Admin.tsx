@@ -1,0 +1,181 @@
+import React from 'react'
+import { motion } from 'framer-motion'
+import {
+    Zap,
+    BrainCircuit,
+    Gift,
+    AlertCircle,
+    RotateCcw,
+    Play,
+    ShieldAlert,
+    Activity,
+    ChevronRight,
+    Settings,
+    Lock
+} from 'lucide-react'
+import { useGameStore } from '@/store/gameStore'
+import { Button } from '@/components/ui/button'
+
+interface AdminControlProps {
+    title: string
+    description: string
+    status: string
+    icon: React.ElementType
+    color: string
+    onTrigger: () => void
+    onReset: () => void
+}
+
+function AdminControl({ title, description, status, icon: Icon, color, onTrigger, onReset }: AdminControlProps) {
+    return (
+        <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-slate-900/40 backdrop-blur-3xl border border-white/5 p-6 rounded-[2rem] flex flex-col gap-6"
+        >
+            <div className="flex items-start justify-between">
+                <div className={`w-12 h-12 rounded-2xl bg-${color}-500/20 flex items-center justify-center border border-${color}-500/30`}>
+                    <Icon className={`text-${color}-400 w-6 h-6`} />
+                </div>
+                <div className="flex bg-white/5 rounded-full px-3 py-1 border border-white/5 items-center gap-2">
+                    <div className={`w-1.5 h-1.5 rounded-full ${status === 'idle' ? 'bg-slate-500' : 'bg-green-500 animate-pulse'}`} />
+                    <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">{status}</span>
+                </div>
+            </div>
+
+            <div className="space-y-1">
+                <h3 className="text-xl font-black text-white italic uppercase tracking-tighter">{title}</h3>
+                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest leading-relaxed">
+                    {description}
+                </p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3 mt-auto">
+                <Button
+                    onClick={onTrigger}
+                    disabled={status !== 'idle'}
+                    className="h-12 bg-white/10 hover:bg-white/20 border-white/5 text-white font-black uppercase tracking-widest text-[10px] gap-2 rounded-xl"
+                >
+                    <Play className="w-3.5 h-3.5" />
+                    Trigger
+                </Button>
+                <Button
+                    onClick={onReset}
+                    variant="ghost"
+                    className="h-12 border border-white/5 text-slate-400 hover:text-red-400 hover:bg-red-400/5 font-black uppercase tracking-widest text-[10px] gap-2 rounded-xl"
+                >
+                    <RotateCcw className="w-3.5 h-3.5" />
+                    Reset
+                </Button>
+            </div>
+        </motion.div>
+    )
+}
+
+export default function Admin() {
+    const {
+        chanceStatus, triggerChance, resetChance,
+        brainiacStatus, triggerBrainiac, resetBrainiac,
+        voltageStatus, triggerVoltage, resetVoltage,
+        giftStatus, triggerGift, resetGift,
+        resetGame
+    } = useGameStore()
+
+    return (
+        <div className="h-screen w-full relative flex flex-col bg-slate-950 overflow-hidden font-sans">
+
+            {/* Ambient Background */}
+            <div className="absolute inset-0 pointer-events-none">
+                <div className="absolute top-[-10%] right-[-10%] w-[40%] h-[40%] bg-indigo-500/10 blur-[120px] rounded-full" />
+                <div className="absolute bottom-[-10%] left-[-10%] w-[40%] h-[40%] bg-rose-500/10 blur-[120px] rounded-full" />
+            </div>
+
+            <div className="relative flex-1 container max-w-6xl mx-auto px-8 py-12 flex flex-col gap-10">
+
+                {/* Admin Header */}
+                <div className="flex items-end justify-between">
+                    <div className="space-y-2">
+                        <div className="flex items-center gap-3">
+                            <ShieldAlert className="text-rose-500 w-8 h-8" />
+                            <h1 className="text-5xl font-black text-white italic tracking-tighter uppercase">Admin Panel</h1>
+                        </div>
+                        <p className="text-slate-500 font-medium uppercase tracking-[0.3em] text-[10px]">Real-time Event Management & State Control</p>
+                    </div>
+
+                    <Button
+                        onClick={resetGame}
+                        variant="destructive"
+                        className="h-14 px-8 rounded-2xl font-black uppercase tracking-widest text-xs gap-3 shadow-2xl shadow-rose-500/20"
+                    >
+                        <RotateCcw className="w-5 h-5" />
+                        Hard Reset Game
+                    </Button>
+                </div>
+
+                {/* Control Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <AdminControl
+                        title="Chance Event"
+                        description="Trigger a random mystery outcome (spinning → revealed)."
+                        status={chanceStatus}
+                        icon={AlertCircle}
+                        color="amber"
+                        onTrigger={triggerChance}
+                        onReset={resetChance}
+                    />
+                    <AdminControl
+                        title="Brainiac Quiz"
+                        description="Launch a mental challenge (thinking → revealed)."
+                        status={brainiacStatus}
+                        icon={BrainCircuit}
+                        color="indigo"
+                        onTrigger={triggerBrainiac}
+                        onReset={resetBrainiac}
+                    />
+                    <AdminControl
+                        title="Voltage Surge"
+                        description="Execute a global power surge (charging → revealed)."
+                        status={voltageStatus}
+                        icon={Activity}
+                        color="blue"
+                        onTrigger={triggerVoltage}
+                        onReset={resetVoltage}
+                    />
+                    <AdminControl
+                        title="Mystery Gift"
+                        description="Unbox a premium tile reward (shaking → revealed)."
+                        status={giftStatus}
+                        icon={Gift}
+                        color="rose"
+                        onTrigger={triggerGift}
+                        onReset={resetGift}
+                    />
+                </div>
+
+                {/* Bottom Info Section */}
+                <div className="mt-auto bg-white/5 border border-white/5 rounded-3xl p-8 flex items-center justify-between">
+                    <div className="flex items-center gap-6">
+                        <div className="w-12 h-12 rounded-2xl bg-slate-800 flex items-center justify-center border border-white/5">
+                            <Lock className="text-slate-500 w-6 h-6" />
+                        </div>
+                        <div>
+                            <h4 className="text-white font-black italic uppercase tracking-widest text-sm">System Authority Level 4</h4>
+                            <p className="text-slate-500 text-[10px] font-bold uppercase tracking-widest mt-1">Direct state mutation enabled. Use controls with caution.</p>
+                        </div>
+                    </div>
+                    <div className="flex items-center gap-4">
+                        <div className="h-1 w-32 bg-slate-800 rounded-full overflow-hidden">
+                            <motion.div
+                                className="h-full bg-indigo-500"
+                                animate={{ width: ['0%', '100%'] }}
+                                transition={{ duration: 4, repeat: Infinity }}
+                            />
+                        </div>
+                        <span className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">Active Link</span>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    )
+}
