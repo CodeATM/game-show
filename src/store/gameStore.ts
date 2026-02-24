@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import { persist } from 'zustand/middleware'
 import {
     CHANCE_EVENTS,
     BRAINIAC_EVENTS,
@@ -11,12 +12,13 @@ interface Player {
     id: number
     name: string
     avatarSeed: string
-    position: number // 0 to 99
+    position: number // 0 (Start) to 100 (Final Tile)
     coins: number
     totalRolls: number
     luckScore: number // 0-100 based on event outcomes
     inventory: string[]
     isActive: boolean
+    color: string
 }
 
 interface TileConfig {
@@ -57,6 +59,7 @@ interface GameState {
     incrementRollCount: () => void
     setIsRolling: (rolling: boolean) => void
     updatePlayerPosition: (playerId: number, newPosition: number) => void
+    updatePlayerName: (playerId: number, name: string) => void
     setTileConfig: (tileId: number, config: Partial<TileConfig>) => void
     setActivePlayerName: (name: string) => void
     setGameSessionId: (id: string) => void
@@ -79,158 +82,169 @@ interface GameState {
     resetGift: () => void
 }
 
-export const useGameStore = create<GameState>((set, get) => ({
-    lastRoll: null,
-    rollCount: 0,
-    isRolling: false,
-    players: [
-        { id: 1, name: "Alpha", avatarSeed: "alpha-gamer", position: 0, coins: 500, totalRolls: 12, luckScore: 85, inventory: ["Shield", "Compass"], isActive: true },
-        { id: 2, name: "Bravo", avatarSeed: "bravo-knight", position: 0, coins: 250, totalRolls: 8, luckScore: 42, inventory: ["Sword"], isActive: false },
-        { id: 3, name: "Charlie", avatarSeed: "charlie-wizard", position: 0, coins: 1200, totalRolls: 25, luckScore: 91, inventory: ["Crown", "Gem"], isActive: false },
-        { id: 4, name: "Delta", avatarSeed: "delta-rogue", position: 0, coins: 50, totalRolls: 4, luckScore: 15, inventory: [], isActive: false },
-    ],
-    boardConfig: Array.from({ length: 100 }, (_, i) => ({
-        id: i,
-        type: 'normal'
-    })),
+export const useGameStore = create<GameState>()(
+    persist(
+        (set, get) => ({
+            lastRoll: null,
+            rollCount: 0,
+            isRolling: false,
+            players: [
+                { id: 1, name: "Alpha", avatarSeed: "alpha-gamer", position: 0, coins: 500, totalRolls: 12, luckScore: 85, inventory: ["Shield", "Compass"], isActive: true, color: "indigo" },
+                { id: 2, name: "Bravo", avatarSeed: "bravo-knight", position: 0, coins: 250, totalRolls: 8, luckScore: 42, inventory: ["Sword"], isActive: false, color: "rose" },
+                { id: 3, name: "Charlie", avatarSeed: "charlie-wizard", position: 0, coins: 1200, totalRolls: 25, luckScore: 91, inventory: ["Crown", "Gem"], isActive: false, color: "emerald" },
+                { id: 4, name: "Delta", avatarSeed: "delta-rogue", position: 0, coins: 50, totalRolls: 4, luckScore: 15, inventory: [], isActive: false, color: "amber" },
+            ],
+            boardConfig: Array.from({ length: 100 }, (_, i) => ({
+                id: i,
+                type: 'normal'
+            })),
 
-    chanceStatus: 'idle',
-    currentChanceEvent: null,
+            chanceStatus: 'idle',
+            currentChanceEvent: null,
 
-    brainiacStatus: 'idle',
-    currentBrainiacEvent: null,
+            brainiacStatus: 'idle',
+            currentBrainiacEvent: null,
 
-    voltageStatus: 'idle',
-    currentVoltageEvent: null,
+            voltageStatus: 'idle',
+            currentVoltageEvent: null,
 
-    giftStatus: 'idle',
-    currentGiftEvent: null,
+            giftStatus: 'idle',
+            currentGiftEvent: null,
 
-    activePlayerName: null,
-    gameSessionId: null,
+            activePlayerName: null,
+            gameSessionId: null,
 
-    setLastRoll: (value) => set({ lastRoll: value }),
-    incrementRollCount: () => set((state) => ({ rollCount: state.rollCount + 1 })),
-    setIsRolling: (rolling) => set({ isRolling: rolling }),
+            setLastRoll: (value) => set({ lastRoll: value }),
+            incrementRollCount: () => set((state) => ({ rollCount: state.rollCount + 1 })),
+            setIsRolling: (rolling) => set({ isRolling: rolling }),
 
-    updatePlayerPosition: (playerId, newPosition) => set((state) => ({
-        players: state.players.map(p =>
-            p.id === playerId ? { ...p, position: Math.min(99, Math.max(0, newPosition)) } : p
-        )
-    })),
+            updatePlayerPosition: (playerId, newPosition) => set((state) => ({
+                players: state.players.map(p =>
+                    p.id === playerId ? { ...p, position: Math.min(100, Math.max(0, newPosition)) } : p
+                )
+            })),
+            updatePlayerName: (playerId, name) => set((state) => ({
+                players: state.players.map(p =>
+                    p.id === playerId ? { ...p, name } : p
+                )
+            })),
 
-    setTileConfig: (tileId, config) => set((state) => ({
-        boardConfig: state.boardConfig.map(t =>
-            t.id === tileId ? { ...t, ...config } : t
-        )
-    })),
+            setTileConfig: (tileId, config) => set((state) => ({
+                boardConfig: state.boardConfig.map(t =>
+                    t.id === tileId ? { ...t, ...config } : t
+                )
+            })),
 
-    setActivePlayerName: (name) => set({ activePlayerName: name }),
-    setGameSessionId: (id) => set({ gameSessionId: id }),
+            setActivePlayerName: (name) => set({ activePlayerName: name }),
+            setGameSessionId: (id) => set({ gameSessionId: id }),
 
-    resetGame: () => set({
-        lastRoll: null,
-        rollCount: 0,
-        isRolling: false,
-        players: [
-            { id: 1, name: "Alpha", avatarSeed: "alpha-gamer", position: 0, coins: 500, totalRolls: 12, luckScore: 85, inventory: ["Shield", "Compass"], isActive: true },
-            { id: 2, name: "Bravo", avatarSeed: "bravo-knight", position: 0, coins: 250, totalRolls: 8, luckScore: 42, inventory: ["Sword"], isActive: false },
-            { id: 3, name: "Charlie", avatarSeed: "charlie-wizard", position: 0, coins: 1200, totalRolls: 25, luckScore: 91, inventory: ["Crown", "Gem"], isActive: false },
-            { id: 4, name: "Delta", avatarSeed: "delta-rogue", position: 0, coins: 50, totalRolls: 4, luckScore: 15, inventory: [], isActive: false },
-        ],
-        chanceStatus: 'idle',
-        currentChanceEvent: null,
-        brainiacStatus: 'idle',
-        currentBrainiacEvent: null,
-        voltageStatus: 'idle',
-        currentVoltageEvent: null,
-        giftStatus: 'idle',
-        currentGiftEvent: null,
-        activePlayerName: null,
-        gameSessionId: null,
-    }),
+            resetGame: () => set({
+                lastRoll: null,
+                rollCount: 0,
+                isRolling: false,
+                players: [
+                    { id: 1, name: "Alpha", avatarSeed: "alpha-gamer", position: 0, coins: 500, totalRolls: 12, luckScore: 85, inventory: ["Shield", "Compass"], isActive: true, color: "indigo" },
+                    { id: 2, name: "Bravo", avatarSeed: "bravo-knight", position: 0, coins: 250, totalRolls: 8, luckScore: 42, inventory: ["Sword"], isActive: false, color: "rose" },
+                    { id: 3, name: "Charlie", avatarSeed: "charlie-wizard", position: 0, coins: 1200, totalRolls: 25, luckScore: 91, inventory: ["Crown", "Gem"], isActive: false, color: "emerald" },
+                    { id: 4, name: "Delta", avatarSeed: "delta-rogue", position: 0, coins: 50, totalRolls: 4, luckScore: 15, inventory: [], isActive: false, color: "amber" },
+                ],
+                chanceStatus: 'idle',
+                currentChanceEvent: null,
+                brainiacStatus: 'idle',
+                currentBrainiacEvent: null,
+                voltageStatus: 'idle',
+                currentVoltageEvent: null,
+                giftStatus: 'idle',
+                currentGiftEvent: null,
+                activePlayerName: null,
+                gameSessionId: null,
+            }),
 
-    triggerChance: () => {
-        // Guard: prevent multiple triggers if already spinning or revealed
-        if (get().chanceStatus !== 'idle') return
+            triggerChance: () => {
+                // Guard: prevent multiple triggers if already spinning or revealed
+                if (get().chanceStatus !== 'idle') return
 
-        const randomIndex = Math.floor(Math.random() * CHANCE_EVENTS.length)
-        const selectedEvent = CHANCE_EVENTS[randomIndex]
-        set({
-            currentChanceEvent: selectedEvent,
-            chanceStatus: 'spinning'
-        })
+                const randomIndex = Math.floor(Math.random() * CHANCE_EVENTS.length)
+                const selectedEvent = CHANCE_EVENTS[randomIndex]
+                set({
+                    currentChanceEvent: selectedEvent,
+                    chanceStatus: 'spinning'
+                })
 
-        setTimeout(() => {
-            set({ chanceStatus: 'revealed' })
-        }, 2000)
-    },
+                setTimeout(() => {
+                    set({ chanceStatus: 'revealed' })
+                }, 2000)
+            },
 
-    resetChance: () => set({
-        chanceStatus: 'idle',
-        currentChanceEvent: null
-    }),
+            resetChance: () => set({
+                chanceStatus: 'idle',
+                currentChanceEvent: null
+            }),
 
-    triggerBrainiac: () => {
-        if (get().brainiacStatus !== 'idle') return
+            triggerBrainiac: () => {
+                if (get().brainiacStatus !== 'idle') return
 
-        const randomIndex = Math.floor(Math.random() * BRAINIAC_EVENTS.length)
-        const selectedEvent = BRAINIAC_EVENTS[randomIndex]
+                const randomIndex = Math.floor(Math.random() * BRAINIAC_EVENTS.length)
+                const selectedEvent = BRAINIAC_EVENTS[randomIndex]
 
-        set({
-            currentBrainiacEvent: selectedEvent,
-            brainiacStatus: 'thinking'
-        })
+                set({
+                    currentBrainiacEvent: selectedEvent,
+                    brainiacStatus: 'thinking'
+                })
 
-        setTimeout(() => {
-            set({ brainiacStatus: 'revealed' })
-        }, 2000)
-    },
+                setTimeout(() => {
+                    set({ brainiacStatus: 'revealed' })
+                }, 2000)
+            },
 
-    resetBrainiac: () => set({
-        brainiacStatus: 'idle',
-        currentBrainiacEvent: null
-    }),
+            resetBrainiac: () => set({
+                brainiacStatus: 'idle',
+                currentBrainiacEvent: null
+            }),
 
-    triggerVoltage: () => {
-        if (get().voltageStatus !== 'idle') return
+            triggerVoltage: () => {
+                if (get().voltageStatus !== 'idle') return
 
-        const randomIndex = Math.floor(Math.random() * VOLTAGE_EVENTS.length)
-        const selectedEvent = VOLTAGE_EVENTS[randomIndex]
+                const randomIndex = Math.floor(Math.random() * VOLTAGE_EVENTS.length)
+                const selectedEvent = VOLTAGE_EVENTS[randomIndex]
 
-        set({
-            currentVoltageEvent: selectedEvent,
-            voltageStatus: 'charging'
-        })
+                set({
+                    currentVoltageEvent: selectedEvent,
+                    voltageStatus: 'charging'
+                })
 
-        setTimeout(() => {
-            set({ voltageStatus: 'revealed' })
-        }, 3000) // Longer charge for "Voltage"
-    },
+                setTimeout(() => {
+                    set({ voltageStatus: 'revealed' })
+                }, 3000) // Longer charge for "Voltage"
+            },
 
-    resetVoltage: () => set({
-        voltageStatus: 'idle',
-        currentVoltageEvent: null
-    }),
+            resetVoltage: () => set({
+                voltageStatus: 'idle',
+                currentVoltageEvent: null
+            }),
 
-    triggerGift: () => {
-        if (get().giftStatus !== 'idle') return
+            triggerGift: () => {
+                if (get().giftStatus !== 'idle') return
 
-        const randomIndex = Math.floor(Math.random() * GIFT_EVENTS.length)
-        const selectedEvent = GIFT_EVENTS[randomIndex]
+                const randomIndex = Math.floor(Math.random() * GIFT_EVENTS.length)
+                const selectedEvent = GIFT_EVENTS[randomIndex]
 
-        set({
-            currentGiftEvent: selectedEvent,
-            giftStatus: 'shaking'
-        })
+                set({
+                    currentGiftEvent: selectedEvent,
+                    giftStatus: 'shaking'
+                })
 
-        setTimeout(() => {
-            set({ giftStatus: 'revealed' })
-        }, 2000)
-    },
+                setTimeout(() => {
+                    set({ giftStatus: 'revealed' })
+                }, 2000)
+            },
 
-    resetGift: () => set({
-        giftStatus: 'idle',
-        currentGiftEvent: null
-    }),
-}))
+            resetGift: () => set({
+                giftStatus: 'idle',
+                currentGiftEvent: null
+            }),
+        }),
+        {
+            name: 'game-storage',
+        }
+    ))

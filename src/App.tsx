@@ -18,18 +18,20 @@ import { useGameStore } from '@/store/gameStore'
 
 function Layout({ children }: { children: React.ReactNode }) {
   const [isVisible, setIsVisible] = useState(true)
-  const [lastActivity, setLastActivity] = useState(Date.now())
-  const { activePlayerName } = useGameStore()
+  const [lastActivity, setLastActivity] = useState(() => Date.now())
   const location = useLocation()
 
   // Reveal navigation on route change and handle auto-hide
   useEffect(() => {
-    setIsVisible(true)
-    setLastActivity(Date.now())
+    const reveal = () => {
+      setIsVisible(true)
+      setLastActivity(Date.now())
+    }
+    reveal()
   }, [location.pathname])
 
   useEffect(() => {
-    let timer: any
+    let timer: ReturnType<typeof setTimeout>
     if (isVisible) {
       timer = window.setTimeout(() => {
         setIsVisible(false)
@@ -113,6 +115,17 @@ function Layout({ children }: { children: React.ReactNode }) {
 
 function App() {
   const { activePlayerName } = useGameStore()
+
+  // Cross-tab Synchronization
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'game-storage') {
+        useGameStore.persist.rehydrate()
+      }
+    }
+    window.addEventListener('storage', handleStorageChange)
+    return () => window.removeEventListener('storage', handleStorageChange)
+  }, [])
 
   return (
     <Layout>

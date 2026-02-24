@@ -2,8 +2,7 @@ import { motion } from 'framer-motion'
 import { useGameStore } from '@/store/gameStore'
 import { HelpCircle, AlertCircle, TrendingUp, TrendingDown } from 'lucide-react'
 
-// Premium motion constants
-const smoothTransition = { duration: 0.8, ease: [0.16, 1, 0.3, 1] } as const;
+
 
 interface TileProps {
     id: number
@@ -100,12 +99,42 @@ export default function Tiles() {
         <div className="h-screen w-full relative flex flex-col items-center justify-center bg-[radial-gradient(circle_at_50%_0%,rgba(99,102,241,0.15),transparent_70%)] bg-slate-950 overflow-hidden selection:bg-indigo-500/30 p-2 sm:p-4 md:p-6 lg:p-8">
 
             {/* Board Container - Centered and scaled to fit 100vh */}
-            <div className="w-full h-full max-w-[1600px] flex items-center justify-center min-h-0">
-                <div className="grid grid-cols-10 grid-rows-10 gap-2 p-6 bg-slate-950/40 rounded-3xl border border-white/5 backdrop-blur-md shadow-2xl w-full h-full max-h-[92vh] mx-auto overflow-hidden">
+            <div className="w-full h-full max-w-[1600px] flex flex-col items-center justify-center min-h-0 gap-4">
+
+                {/* Start Zone */}
+                <div className="flex items-center gap-4 bg-slate-900/40 backdrop-blur-md border border-white/5 p-4 rounded-2xl w-full max-w-4xl">
+                    <div className="flex flex-col">
+                        <span className="text-[10px] font-black uppercase tracking-[0.2em] text-indigo-400">Paddock</span>
+                        <span className="text-sm font-black text-white italic tracking-tight uppercase">Start Zone</span>
+                    </div>
+                    <div className="h-8 w-px bg-white/5 mx-2" />
+                    <div className="flex items-center gap-3">
+                        {players.filter(p => p.position === 0).length === 0 && (
+                            <span className="text-[10px] font-bold text-slate-600 uppercase tracking-widest italic">All units deployed</span>
+                        )}
+                        <div className="flex items-center gap-3">
+                            {players.filter(p => p.position === 0).map(p => (
+                                <motion.div
+                                    key={p.id}
+                                    layoutId={`player-${p.id}`}
+                                    className={`w-8 h-8 rounded-xl border border-white/20 flex items-center justify-center shadow-lg relative ${p.id === 1 ? 'bg-indigo-500' :
+                                        p.id === 2 ? 'bg-rose-500' :
+                                            p.id === 3 ? 'bg-emerald-500' :
+                                                'bg-amber-500'
+                                        }`}
+                                >
+                                    <span className="text-[10px] font-black text-white uppercase">{p.name[0]}</span>
+                                </motion.div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+
+                <div className="grid grid-cols-10 grid-rows-10 gap-2 p-6 bg-slate-950/40 rounded-3xl border border-white/5 backdrop-blur-md shadow-2xl w-full h-full max-h-[85vh] mx-auto overflow-hidden">
                     {boardConfig.map((tile) => {
                         const config = exampleConfigs.find(c => c.id === tile.id) || tile;
                         const playersOnThisTile = players
-                            .filter(p => p.position === tile.id)
+                            .filter(p => p.position === (tile.id + 1))
                             .map(p => p.id);
 
                         return (

@@ -1,10 +1,22 @@
 import { motion, AnimatePresence } from 'framer-motion'
+import { useMemo } from 'react'
 import { Lightbulb, RotateCcw, BrainCircuit } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useGameStore } from '@/store/gameStore'
 
 export default function Brainiac() {
     const { brainiacStatus, currentBrainiacEvent, triggerBrainiac, resetBrainiac } = useGameStore()
+
+    const sparks = useMemo(() => [
+        { x: -42, delay: 0.5 },
+        { x: 15, delay: 1.2 },
+        { x: 33, delay: 0.8 },
+        { x: -12, delay: 1.5 },
+        { x: 48, delay: 0.3 },
+        { x: -25, delay: 1.9 },
+        { x: 5, delay: 0.7 },
+        { x: -38, delay: 1.1 }
+    ], [])
 
     return (
         <div className="h-screen w-full relative flex flex-col items-center justify-center bg-[radial-gradient(circle_at_50%_50%,rgba(59,130,246,0.1),transparent_70%)] bg-slate-950 overflow-hidden px-8">
@@ -83,16 +95,16 @@ export default function Brainiac() {
                             {/* Intellectual Sparks (Floating geometric shapes) */}
                             {brainiacStatus === 'thinking' && (
                                 <div className="absolute inset-0">
-                                    {[...Array(8)].map((_, i) => (
+                                    {sparks.map((spark, i) => (
                                         <motion.div
                                             key={i}
                                             animate={{
                                                 y: [-20, -100],
-                                                x: (Math.random() - 0.5) * 100,
+                                                x: spark.x,
                                                 opacity: [0, 1, 0],
                                                 scale: [0.5, 1.2, 0.5],
                                             }}
-                                            transition={{ duration: 1.5, repeat: Infinity, delay: i * 0.2 }}
+                                            transition={{ duration: 1.5, repeat: Infinity, delay: spark.delay }}
                                             className="absolute top-1/2 left-1/2 w-4 h-4 text-blue-300/60"
                                         >
                                             <BrainCircuit className="w-full h-full" />
@@ -125,7 +137,7 @@ export default function Brainiac() {
                         className="w-full max-w-xl flex flex-col items-center"
                     >
                         {/* Question Card */}
-                        <div className={`w-full aspect-[16/10] p-1 rounded-[2.5rem] bg-gradient-to-br ${currentBrainiacEvent?.color} shadow-[0_0_100px_rgba(59,130,246,0.5)] relative overflow-hidden`}>
+                        <div className={`w-full aspect-16/10 p-1 rounded-[2.5rem] bg-linear-gradient-to-br ${currentBrainiacEvent?.color} shadow-[0_0_100px_rgba(59,130,246,0.5)] relative overflow-hidden`}>
                             {/* Geometric Background pattern */}
                             <div className="absolute inset-0 opacity-10 pointer-events-none">
                                 <div className="grid grid-cols-6 grid-rows-4 h-full w-full">
@@ -137,7 +149,7 @@ export default function Brainiac() {
 
                             <div className="w-full h-full bg-slate-950/90 backdrop-blur-xl rounded-[2.4rem] p-10 flex flex-col items-center justify-center text-center relative z-10">
 
-                                <div className={`p-6 rounded-full bg-gradient-to-br ${currentBrainiacEvent?.color} mb-8 shadow-2xl ring-4 ring-white/10`}>
+                                <div className={`p-6 rounded-full bg-linear-gradient-to-br ${currentBrainiacEvent?.color} mb-8 shadow-2xl ring-4 ring-white/10`}>
                                     {currentBrainiacEvent && <currentBrainiacEvent.icon className="w-14 h-14 text-white" />}
                                 </div>
 

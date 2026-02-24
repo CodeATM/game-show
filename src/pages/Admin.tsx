@@ -1,7 +1,7 @@
 import React from 'react'
 import { motion } from 'framer-motion'
 import {
-    Zap,
+
     BrainCircuit,
     Gift,
     AlertCircle,
@@ -9,12 +9,17 @@ import {
     Play,
     ShieldAlert,
     Activity,
-    ChevronRight,
-    Settings,
-    Lock
+
+    Lock,
+    Users,
+
+    Plus,
+    Minus
 } from 'lucide-react'
 import { useGameStore } from '@/store/gameStore'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Badge } from '@/components/ui/badge'
 
 interface AdminControlProps {
     title: string
@@ -72,8 +77,114 @@ function AdminControl({ title, description, status, icon: Icon, color, onTrigger
     )
 }
 
+interface PlayerCardProps {
+    player: {
+        id: number
+        name: string
+        avatarSeed: string
+        position: number
+        color: string
+        coins: number
+    }
+    updatePlayerName: (id: number, name: string) => void
+    updatePlayerPosition: (id: number, pos: number) => void
+}
+
+function PlayerCard({ player, updatePlayerName, updatePlayerPosition }: PlayerCardProps) {
+    const [moveValue, setMoveValue] = React.useState('')
+
+    const handleMove = (e: React.KeyboardEvent) => {
+        if (e.key === 'Enter' && moveValue.trim() !== '') {
+            const value = parseInt(moveValue)
+            if (!isNaN(value)) {
+                updatePlayerPosition(player.id, player.position + value)
+                setMoveValue('')
+            }
+        }
+    }
+
+    return (
+        <div className="bg-white/2 border border-white/5 rounded-2xl p-5 flex flex-col gap-4 hover:border-white/10 transition-colors">
+            <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                    <div className={`w-3 h-3 rounded-full bg-${player.color}-500 shadow-lg`} />
+                    <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Player 0{player.id}</span>
+                </div>
+                <Badge variant="outline" className="text-[9px] font-black uppercase tracking-tighter border-white/10 text-slate-400">
+                    Pos: {player.position}
+                </Badge>
+            </div>
+
+            <div className="flex flex-col gap-3">
+                <div className="space-y-1">
+                    <span className="text-[8px] font-black text-slate-600 uppercase tracking-widest ml-1">Display Name</span>
+                    <Input
+                        value={player.name}
+                        onChange={(e) => updatePlayerName(player.id, e.target.value)}
+                        className="h-11 bg-white/5 border-white/5 text-white font-bold placeholder:text-slate-600 focus:ring-indigo-500/20"
+                        placeholder="Enter Name..."
+                    />
+                </div>
+
+                <div className="space-y-1">
+                    <span className="text-[8px] font-black text-slate-600 uppercase tracking-widest ml-1">Move (± Val + Enter)</span>
+                    <div className="flex gap-2">
+                        <Input
+                            value={moveValue}
+                            onChange={(e) => setMoveValue(e.target.value)}
+                            onKeyDown={handleMove}
+                            className="h-11 bg-white/5 border-white/5 text-white font-black placeholder:text-slate-700 text-center"
+                            placeholder="±"
+                        />
+                        <div className="flex items-center bg-white/5 rounded-xl border border-white/5 p-1 gap-1 flex-1">
+                            <Button
+                                size="icon"
+                                variant="ghost"
+                                onClick={() => updatePlayerPosition(player.id, player.position - 1)}
+                                className="flex-1 h-9 rounded-lg hover:bg-white/10 text-slate-400"
+                            >
+                                <Minus className="w-4 h-4" />
+                            </Button>
+                            <Button
+                                size="icon"
+                                variant="ghost"
+                                onClick={() => updatePlayerPosition(player.id, player.position + 1)}
+                                className="flex-1 h-9 rounded-lg hover:bg-white/10 text-slate-400"
+                            >
+                                <Plus className="w-4 h-4" />
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div className="flex gap-2">
+                <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => updatePlayerPosition(player.id, player.position - 10)}
+                    className="flex-1 h-8 text-[9px] font-black uppercase tracking-tighter bg-white/5 border-white/5 text-slate-500 hover:text-white"
+                >
+                    -10
+                </Button>
+                <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => updatePlayerPosition(player.id, player.position + 10)}
+                    className="flex-1 h-8 text-[9px] font-black uppercase tracking-tighter bg-white/5 border-white/5 text-slate-500 hover:text-white"
+                >
+                    +10
+                </Button>
+            </div>
+        </div>
+    )
+}
+
 export default function Admin() {
     const {
+        players,
+        updatePlayerName,
+        updatePlayerPosition,
         chanceStatus, triggerChance, resetChance,
         brainiacStatus, triggerBrainiac, resetBrainiac,
         voltageStatus, triggerVoltage, resetVoltage,
@@ -111,6 +222,41 @@ export default function Admin() {
                         Hard Reset Game
                     </Button>
                 </div>
+
+                {/* Participant Management */}
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.1 }}
+                    className="bg-slate-900/40 backdrop-blur-3xl border border-white/5 p-8 rounded-[2.5rem] flex flex-col gap-8"
+                >
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-4">
+                            <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 flex items-center justify-center border border-indigo-500/20">
+                                <Users className="text-indigo-400 w-6 h-6" />
+                            </div>
+                            <div>
+                                <h2 className="text-2xl font-black text-white italic uppercase tracking-tighter">Participant Roster</h2>
+                                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Global Player Positioning & Identity Management</p>
+                            </div>
+                        </div>
+                        <div className="flex bg-white/5 rounded-full px-4 py-2 border border-white/5 items-center gap-3">
+                            <Activity className="text-indigo-400 w-4 h-4" />
+                            <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Syncing Live</span>
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                        {players.map((player) => (
+                            <PlayerCard
+                                key={player.id}
+                                player={player}
+                                updatePlayerName={updatePlayerName}
+                                updatePlayerPosition={updatePlayerPosition}
+                            />
+                        ))}
+                    </div>
+                </motion.div>
 
                 {/* Control Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">

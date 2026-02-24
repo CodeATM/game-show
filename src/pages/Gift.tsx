@@ -1,4 +1,5 @@
 import { motion, AnimatePresence } from 'framer-motion'
+import { useMemo } from 'react'
 import { Gift as GiftIcon, RotateCcw, Sparkles, Star } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useGameStore } from '@/store/gameStore'
@@ -6,28 +7,48 @@ import { useGameStore } from '@/store/gameStore'
 export default function Gift() {
     const { giftStatus, currentGiftEvent, triggerGift, resetGift } = useGameStore()
 
+    const decorativeParticles = useMemo(() => [
+        { startY: 800, x: -50, duration: 6, delay: 1, size: 8 },
+        { startY: 450, x: 80, duration: 8, delay: 0.5, size: 10 },
+        { startY: 200, x: -30, duration: 5, delay: 2, size: 6 },
+        { startY: 600, x: 60, duration: 7, delay: 1.5, size: 12 },
+        { startY: 100, x: -90, duration: 9, delay: 0, size: 5 },
+        { startY: 900, x: 20, duration: 6.5, delay: 3, size: 7 },
+        { startY: 350, x: -70, duration: 7.5, delay: 1.2, size: 9 },
+        { startY: 750, x: 40, duration: 5.5, delay: 0.8, size: 11 },
+        { startY: 500, x: -10, duration: 8.5, delay: 2.5, size: 4 },
+        { startY: 150, x: 100, duration: 6.2, delay: 1.8, size: 8 }
+    ], [])
+
+    const shakingSparkles = useMemo(() => [
+        { x: -120, y: 80, rotate: 45 }, { x: 90, y: -110, rotate: 120 },
+        { x: -40, y: 130, rotate: 200 }, { x: 150, y: 20, rotate: 15 },
+        { x: -100, y: -90, rotate: 280 }, { x: 180, y: -60, rotate: 30 },
+        { x: -140, y: -30, rotate: 160 }, { x: 60, y: 150, rotate: 90 }
+    ], [])
+
     return (
         <div className="h-screen w-full relative flex flex-col items-center justify-center bg-[radial-gradient(circle_at_50%_50%,rgba(236,72,153,0.1),transparent_70%)] bg-slate-950 overflow-hidden px-8">
 
             {/* Background Decorative Particles */}
             <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                {[...Array(20)].map((_, i) => (
+                {decorativeParticles.map((particle, i) => (
                     <motion.div
                         key={i}
-                        initial={{ opacity: 0, y: Math.random() * 1000 }}
+                        initial={{ opacity: 0, y: particle.startY }}
                         animate={{
                             opacity: [0, 0.5, 0],
                             y: [null, -100],
-                            x: (Math.random() - 0.5) * 200
+                            x: particle.x
                         }}
                         transition={{
-                            duration: Math.random() * 5 + 5,
+                            duration: particle.duration,
                             repeat: Infinity,
-                            delay: Math.random() * 5
+                            delay: particle.delay
                         }}
                         className="absolute text-pink-500/20"
                     >
-                        <Star size={Math.random() * 12 + 4} />
+                        <Star size={particle.size} />
                     </motion.div>
                 ))}
             </div>
@@ -72,16 +93,16 @@ export default function Gift() {
 
                                 {giftStatus === 'shaking' && (
                                     <div className="absolute inset-0 flex items-center justify-center">
-                                        {[...Array(12)].map((_, i) => (
+                                        {shakingSparkles.map((sparkle, i) => (
                                             <motion.div
                                                 key={i}
                                                 initial={{ opacity: 0 }}
                                                 animate={{
                                                     opacity: [0, 1, 0],
                                                     scale: [1, 2, 1],
-                                                    x: (Math.random() - 0.5) * 300,
-                                                    y: (Math.random() - 0.5) * 300,
-                                                    rotate: Math.random() * 360
+                                                    x: sparkle.x,
+                                                    y: sparkle.y,
+                                                    rotate: sparkle.rotate
                                                 }}
                                                 transition={{ duration: 0.4, repeat: Infinity, delay: i * 0.05 }}
                                                 className="absolute"

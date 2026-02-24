@@ -10,8 +10,7 @@ import {
     Shield,
     type LucideIcon,
     ChevronRight,
-    ArrowUpRight,
-    Wallet
+    ArrowUpRight
 } from 'lucide-react'
 import { useGameStore } from '@/store/gameStore'
 

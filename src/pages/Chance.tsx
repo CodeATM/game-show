@@ -1,10 +1,18 @@
 import { motion, AnimatePresence } from 'framer-motion'
+import { useMemo } from 'react'
 import { Zap, RotateCcw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useGameStore } from '@/store/gameStore'
 
 export default function Chance() {
     const { chanceStatus, currentChanceEvent, triggerChance, resetChance } = useGameStore()
+
+    const sparks = useMemo(() => [
+        { x: -150, y: 120 }, { x: 80, y: -190 }, { x: -40, y: 150 },
+        { x: 160, y: 40 }, { x: -120, y: -130 }, { x: 200, y: -70 },
+        { x: -180, y: -20 }, { x: 50, y: 180 }, { x: -90, y: 110 },
+        { x: 110, y: -150 }, { x: -200, y: 60 }, { x: 140, y: 130 }
+    ], [])
 
     return (
         <div className="h-screen w-full relative flex flex-col items-center justify-center bg-[radial-gradient(circle_at_50%_0%,rgba(245,158,11,0.15),transparent_70%)] bg-slate-950 overflow-hidden px-8">
@@ -88,15 +96,15 @@ export default function Chance() {
                             {/* Electric Sparks */}
                             {chanceStatus === 'spinning' && (
                                 <div className="absolute inset-0">
-                                    {[...Array(12)].map((_, i) => (
+                                    {sparks.map((spark, i) => (
                                         <motion.div
                                             key={i}
                                             initial={{ opacity: 0 }}
                                             animate={{
                                                 opacity: [0, 1, 0],
                                                 scale: [0.5, 2.5, 0.8],
-                                                x: (Math.random() - 0.5) * 400,
-                                                y: (Math.random() - 0.5) * 400,
+                                                x: spark.x,
+                                                y: spark.y,
                                             }}
                                             transition={{ duration: 0.2, repeat: Infinity, delay: i * 0.03 }}
                                             className="absolute top-1/2 left-1/2 w-1.5 h-12 bg-amber-400 blur-[1px] rounded-full origin-center"
