@@ -158,7 +158,7 @@ export default function Stats() {
                                     <div className="flex flex-col items-end">
                                         <p className="text-2xl font-black text-white italic tracking-tighter">${player.coins.toLocaleString()}</p>
                                         <div className="flex gap-1 mt-1">
-                                            {player.inventory.map((item, i) => (
+                                            {player.inventory.map((_item, i) => (
                                                 <div key={i} className="w-5 h-5 rounded-md bg-white/5 flex items-center justify-center border border-white/10">
                                                     <Star size={10} className="text-slate-500" />
                                                 </div>

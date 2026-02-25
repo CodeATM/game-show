@@ -148,7 +148,7 @@ export default function DiceRoller() {
                 onRoll={handleRoll}
                 size={340}
                 rollingTime={2500}
-                defaultValue={lastRoll || 1}
+                defaultValue={(lastRoll || 1) as 1 | 2 | 3 | 4 | 5 | 6}
                 triggers={['click', 'r', 'spacebar']}
               />
             </div>
