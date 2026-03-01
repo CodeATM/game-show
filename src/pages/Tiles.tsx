@@ -9,9 +9,11 @@ interface TileProps {
     type: 'normal' | 'chance' | 'quiz' | 'snake' | 'ladder'
     label?: string
     playersOnTile: number[]
+    isActiveTile?: boolean
+    activeColor?: string
 }
 
-function Tile({ id, type, label, playersOnTile }: TileProps) {
+function Tile({ id, type, label, playersOnTile, isActiveTile, activeColor }: TileProps) {
     const getStyles = () => {
         switch (type) {
             case 'chance': return 'border-amber-400 bg-amber-500/15 text-amber-300 shadow-[0_0_15px_rgba(251,191,36,0.1)]'
@@ -32,16 +34,54 @@ function Tile({ id, type, label, playersOnTile }: TileProps) {
         }
     }
 
+    const neonColorMap: Record<string, string> = {
+        indigo: '#6366f1',
+        rose: '#f43f5e',
+        emerald: '#10b981',
+        amber: '#f59e0b'
+    };
+
+    const activeNeonColor = activeColor ? neonColorMap[activeColor] || '#6366f1' : '#6366f1';
+
     return (
         <motion.div
             whileHover={{ scale: 1.02, backgroundColor: "rgba(255,255,255,0.05)" }}
-            className={`relative flex flex-col items-center justify-center rounded-lg border transition-all duration-300 min-h-0 min-w-0 ${getStyles()}`}
+            className={`relative flex flex-col items-center justify-center rounded-lg border transition-all duration-300 min-h-0 min-w-0 overflow-hidden ${getStyles()} ${isActiveTile ? 'border-transparent shadow-none' : ''}`}
         >
-            <span className="absolute top-1.5 left-2 text-[10px] font-black opacity-80 select-none">
+            {/* Neon Strip Light Animation */}
+            {isActiveTile && (
+                <div className="absolute inset-0 rounded-lg pointer-events-none">
+                    {/* Pulsing Base Glow */}
+                    <motion.div
+                        className="absolute inset-0 rounded-lg opacity-20"
+                        style={{ backgroundColor: activeNeonColor }}
+                        animate={{ opacity: [0.1, 0.3, 0.1] }}
+                        transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                    />
+                    {/* Rotating Neon Border */}
+                    <div className="absolute inset-0 rounded-lg overflow-hidden">
+                        <motion.div
+                            className="absolute inset-[-150%] opacity-100"
+                            style={{
+                                background: `conic-gradient(from 0deg, transparent 0deg, transparent 300deg, ${activeNeonColor} 340deg, ${activeNeonColor} 360deg)`
+                            }}
+                            animate={{ rotate: 360 }}
+                            transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                        />
+                    </div>
+                    {/* Constant border to maintain shape */}
+                    <div
+                        className="absolute inset-0 rounded-lg border-2 opacity-50 shadow-[inset_0_0_10px_rgba(255,255,255,0.2)]"
+                        style={{ borderColor: activeNeonColor, boxShadow: `0 0 15px ${activeNeonColor}44` }}
+                    />
+                </div>
+            )}
+
+            <span className="absolute top-1.5 left-2 text-[10px] font-black opacity-80 select-none z-10">
                 {id + 1}
             </span>
 
-            <div className="flex flex-col items-center gap-0.5 scale-90 sm:scale-100 mt-2">
+            <div className="flex flex-col items-center gap-0.5 scale-90 sm:scale-100 mt-2 z-10">
                 {getIcon()}
                 {label && <span className="text-[10px] font-black uppercase tracking-widest text-center px-1 line-clamp-1">{label}</span>}
             </div>
@@ -66,34 +106,6 @@ function Tile({ id, type, label, playersOnTile }: TileProps) {
 
 export default function Tiles() {
     const { boardConfig, players } = useGameStore()
-
-    // Expanded special tiles for a richer experience
-    const exampleConfigs = [
-        { id: 4, type: 'chance', label: 'Chance' },
-        { id: 7, type: 'ladder', label: 'Boost' },
-        { id: 12, type: 'quiz', label: 'Quiz' },
-        { id: 15, type: 'snake', label: 'Danger' },
-        { id: 22, type: 'chance', label: 'Mystery' },
-        { id: 25, type: 'snake', label: 'Danger' },
-        { id: 28, type: 'ladder', label: 'Boost' },
-        { id: 33, type: 'quiz', label: 'Trivia' },
-        { id: 37, type: 'ladder', label: 'Boost' },
-        { id: 42, type: 'chance', label: 'Luck' },
-        { id: 45, type: 'snake', label: 'Trap' },
-        { id: 50, type: 'quiz', label: 'Trivia' },
-        { id: 54, type: 'ladder', label: 'Elite' },
-        { id: 58, type: 'snake', label: 'Pit' },
-        { id: 63, type: 'chance', label: 'Mystery' },
-        { id: 67, type: 'quiz', label: 'Challenge' },
-        { id: 72, type: 'ladder', label: 'Ascend' },
-        { id: 75, type: 'snake', label: 'Despair' },
-        { id: 82, type: 'snake', label: 'Trap' },
-        { id: 85, type: 'chance', label: 'Destiny' },
-        { id: 88, type: 'quiz', label: 'Mastery' },
-        { id: 91, type: 'ladder', label: 'Elite' },
-        { id: 94, type: 'snake', label: 'Overlord' },
-        { id: 97, type: 'chance', label: 'Grand' },
-    ] as const;
 
     return (
         <div className="h-screen w-full relative flex flex-col items-center justify-center bg-[radial-gradient(circle_at_50%_0%,rgba(99,102,241,0.15),transparent_70%)] bg-slate-950 overflow-hidden selection:bg-indigo-500/30 p-2 sm:p-4 md:p-6 lg:p-8">
@@ -131,22 +143,43 @@ export default function Tiles() {
                 </div>
 
                 <div className="grid grid-cols-10 grid-rows-10 gap-2 p-6 bg-slate-950/40 rounded-3xl border border-white/5 backdrop-blur-md shadow-2xl w-full h-full max-h-[85vh] mx-auto overflow-hidden">
-                    {boardConfig.map((tile) => {
-                        const config = exampleConfigs.find(c => c.id === tile.id) || tile;
-                        const playersOnThisTile = players
-                            .filter(p => p.position === (tile.id + 1))
-                            .map(p => p.id);
+                    {(() => {
+                        const visualTiles = [];
+                        for (let y = 0; y < 10; y++) {
+                            const r = 9 - y; // Row from bottom (0-9)
+                            for (let x = 0; x < 10; x++) {
+                                let index;
+                                if (r % 2 === 0) {
+                                    index = r * 10 + x; // Left to Right
+                                } else {
+                                    index = r * 10 + (9 - x); // Right to Left
+                                }
+                                visualTiles.push(boardConfig[index]);
+                            }
+                        }
 
-                        return (
-                            <Tile
-                                key={tile.id}
-                                id={tile.id}
-                                type={config.type}
-                                label={config.label}
-                                playersOnTile={playersOnThisTile}
-                            />
-                        );
-                    })}
+                        return visualTiles.map((tile) => {
+                            const playersOnThisTile = players
+                                .filter(p => p.position === (tile.id + 1))
+                                .map(p => p.id);
+
+                            const activePlayer = players.find(p => p.isActive);
+                            const isActiveTile = activePlayer ? activePlayer.position === (tile.id + 1) : false;
+                            const activeColor = activePlayer ? activePlayer.color : undefined;
+
+                            return (
+                                <Tile
+                                    key={tile.id}
+                                    id={tile.id}
+                                    type={tile.type}
+                                    label={tile.label}
+                                    playersOnTile={playersOnThisTile}
+                                    isActiveTile={isActiveTile}
+                                    activeColor={activeColor}
+                                />
+                            );
+                        });
+                    })()}
                 </div>
             </div>
 

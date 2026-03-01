@@ -75,17 +75,18 @@ export default function DiceRoller() {
     lastRoll,
     rollCount,
     isRolling,
-    setLastRoll,
-    incrementRollCount,
+    movePlayerWithDice,
     setIsRolling,
     resetGame
   } = useGameStore()
 
   const handleRoll = useCallback((value: number) => {
-    setLastRoll(value)
-    incrementRollCount()
+    const activePlayer = useGameStore.getState().players.find(p => p.isActive)
+    if (activePlayer) {
+      movePlayerWithDice(activePlayer.id, value)
+    }
     setIsRolling(false)
-  }, [setLastRoll, incrementRollCount, setIsRolling])
+  }, [movePlayerWithDice, setIsRolling])
 
   const startRolling = () => {
     if (!isRolling) {
