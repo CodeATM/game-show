@@ -1,11 +1,34 @@
+'use client'
+
 import { motion, AnimatePresence } from 'framer-motion'
 import { useMemo } from 'react'
-import { Lightbulb, RotateCcw, BrainCircuit } from 'lucide-react'
+import { Lightbulb, RotateCcw, BrainCircuit, GraduationCap } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useGameStore } from '@/store/gameStore'
 
-export default function Brainiac() {
+// Icon mapping to handle serialization issues
+const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
+    'BrainCircuit': BrainCircuit,
+    'Lightbulb': Lightbulb,
+    'GraduationCap': GraduationCap,
+}
+
+export default function BrainiacPage() {
     const { brainiacStatus, currentBrainiacEvent, triggerBrainiac, resetBrainiac } = useGameStore()
+    
+    // Get icon component by name
+    const getIconComponent = () => {
+        if (!currentBrainiacEvent?.icon) return null
+        // If icon is already a component, use it
+        if (typeof currentBrainiacEvent.icon === 'function') {
+            return currentBrainiacEvent.icon
+        }
+        // If icon is serialized, try to get from map
+        const iconName = (currentBrainiacEvent.icon as any).name || 'BrainCircuit'
+        return iconMap[iconName] || BrainCircuit
+    }
+    
+    const EventIcon = getIconComponent()
 
     const sparks = useMemo(() => [
         { x: -42, delay: 0.5 },
@@ -150,7 +173,7 @@ export default function Brainiac() {
                             <div className="w-full h-full bg-slate-950/90 backdrop-blur-xl rounded-[2.4rem] p-10 flex flex-col items-center justify-center text-center relative z-10">
 
                                 <div className={`p-6 rounded-full bg-linear-gradient-to-br ${currentBrainiacEvent?.color} mb-8 shadow-2xl ring-4 ring-white/10`}>
-                                    {currentBrainiacEvent && <currentBrainiacEvent.icon className="w-14 h-14 text-white" />}
+                                    {EventIcon && <EventIcon className="w-14 h-14 text-white" />}
                                 </div>
 
                                 <motion.h2
@@ -159,7 +182,7 @@ export default function Brainiac() {
                                     transition={{ delay: 0.2 }}
                                     className="text-4xl font-black text-white mb-6 tracking-tight"
                                 >
-                                    {currentBrainiacEvent?.title}
+                                    {currentBrainiacEvent?.title || 'Knowledge Query'}
                                 </motion.h2>
 
                                 <motion.p
@@ -168,7 +191,7 @@ export default function Brainiac() {
                                     transition={{ delay: 0.3 }}
                                     className="text-2xl text-blue-100/90 font-medium leading-relaxed max-w-sm italic quote"
                                 >
-                                    "{currentBrainiacEvent?.description}"
+                                    &quot;{currentBrainiacEvent?.description || 'A question awaits the worthy challenger...'}&quot;
                                 </motion.p>
 
                                 {/* Decorative Icons */}

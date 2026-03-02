@@ -1,7 +1,8 @@
+'use client'
+
 import React from 'react'
 import { motion } from 'framer-motion'
 import {
-
     BrainCircuit,
     Gift,
     AlertCircle,
@@ -9,10 +10,8 @@ import {
     Play,
     ShieldAlert,
     Activity,
-
     Lock,
     Users,
-
     Plus,
     Minus,
     ToggleLeft,
@@ -211,7 +210,7 @@ function PlayerCard({ player, updatePlayerName, updatePlayerPosition, movePlayer
     )
 }
 
-export default function Admin() {
+function AdminContent() {
     const {
         players,
         updatePlayerName,
@@ -230,15 +229,15 @@ export default function Admin() {
     } = useGameStore()
 
     return (
-        <div className="min-h-screen w-full relative flex flex-col bg-slate-950 font-sans">
+        <div className="min-h-screen w-full relative flex flex-col bg-slate-950 font-sans overflow-x-hidden">
 
             {/* Ambient Background */}
-            <div className="absolute inset-0 pointer-events-none">
+            <div className="absolute inset-0 pointer-events-none overflow-hidden">
                 <div className="absolute top-[-10%] right-[-10%] w-[40%] h-[40%] bg-indigo-500/10 blur-[120px] rounded-full" />
                 <div className="absolute bottom-[-10%] left-[-10%] w-[40%] h-[40%] bg-rose-500/10 blur-[120px] rounded-full" />
             </div>
 
-            <div className="relative flex-1 container max-w-6xl mx-auto px-8 py-12 flex flex-col gap-10">
+            <div className="relative flex-1 w-full max-w-6xl mx-auto px-4 md:px-8 py-12 flex flex-col gap-10">
 
                 {/* Admin Header */}
                 <div className="flex items-end justify-between">
@@ -293,7 +292,7 @@ export default function Admin() {
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
                         {players.map((player) => (
                             <PlayerCard
                                 key={player.id}
@@ -309,7 +308,7 @@ export default function Admin() {
                 </motion.div>
 
                 {/* Control Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6">
                     <AdminControl
                         title="Chance Event"
                         description="Trigger a random mystery outcome."
@@ -381,5 +380,11 @@ export default function Admin() {
 
             </div>
         </div>
+    )
+}
+
+export default function AdminPage() {
+    return (
+        <AdminContent />
     )
 }

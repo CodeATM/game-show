@@ -1,11 +1,36 @@
+'use client'
+
 import { motion, AnimatePresence } from 'framer-motion'
 import { useMemo } from 'react'
-import { Zap, RotateCcw } from 'lucide-react'
+import { Zap, RotateCcw, ArrowRight, Wallet, UserMinus, Repeat } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useGameStore } from '@/store/gameStore'
 
-export default function Chance() {
+// Icon mapping to handle serialization issues
+const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
+    'Zap': Zap,
+    'ArrowRight': ArrowRight,
+    'Wallet': Wallet,
+    'UserMinus': UserMinus,
+    'Repeat': Repeat,
+}
+
+export default function ChancePage() {
     const { chanceStatus, currentChanceEvent, triggerChance, resetChance } = useGameStore()
+    
+    // Get icon component by name
+    const getIconComponent = () => {
+        if (!currentChanceEvent?.icon) return null
+        // If icon is already a component, use it
+        if (typeof currentChanceEvent.icon === 'function') {
+            return currentChanceEvent.icon
+        }
+        // If icon is serialized, try to get from map
+        const iconName = (currentChanceEvent.icon as any).name || 'Zap'
+        return iconMap[iconName] || Zap
+    }
+    
+    const EventIcon = getIconComponent()
 
     const sparks = useMemo(() => [
         { x: -150, y: 120 }, { x: 80, y: -190 }, { x: -40, y: 150 },
@@ -149,19 +174,19 @@ export default function Chance() {
                         className="w-full max-w-xl flex flex-col items-center"
                     >
                         {/* Event Card */}
-                        <div className={`w-full aspect-[16/10] p-1 rounded-[2.5rem] bg-gradient-to-br ${currentChanceEvent?.color} shadow-[0_0_80px_rgba(0,0,0,0.4)] relative`}>
+                        <div className={`w-full aspect-16/10 p-1 rounded-[2.5rem] bg-linear-to-br ${currentChanceEvent?.color} shadow-[0_0_80px_rgba(0,0,0,0.4)] relative`}>
                             <div className="w-full h-full bg-slate-950/90 backdrop-blur-xl rounded-[2.4rem] p-10 flex flex-col items-center justify-center text-center">
 
-                                <div className={`p-5 rounded-3xl bg-gradient-to-br ${currentChanceEvent?.color} mb-6 shadow-2xl`}>
-                                    {currentChanceEvent && <currentChanceEvent.icon className="w-12 h-12 text-white" />}
+                                <div className={`p-5 rounded-3xl bg-linear-to-br ${currentChanceEvent?.color} mb-6 shadow-2xl`}>
+                                    {EventIcon && <EventIcon className="w-12 h-12 text-white" />}
                                 </div>
 
                                 <h2 className="text-4xl font-black text-white mb-4 tracking-tighter italic">
-                                    {currentChanceEvent?.title}
+                                    {currentChanceEvent?.title || 'Chance Event'}
                                 </h2>
 
                                 <p className="text-xl text-slate-300 font-medium leading-relaxed max-w-sm">
-                                    {currentChanceEvent?.description}
+                                    {currentChanceEvent?.description || 'Something mysterious is about to happen...'}
                                 </p>
 
                                 {/* Decorative Elements */}

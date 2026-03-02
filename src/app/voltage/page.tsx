@@ -1,17 +1,41 @@
+'use client'
+
 import { motion, AnimatePresence } from 'framer-motion'
-import { BatteryCharging, RotateCcw, AlertTriangle, Activity } from 'lucide-react'
+import { BatteryCharging, RotateCcw, AlertTriangle, Activity, ZapOff, ShieldAlert } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useGameStore } from '@/store/gameStore'
 
-export default function Voltage() {
+// Icon mapping to handle serialization issues
+const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
+    'Activity': Activity,
+    'ZapOff': ZapOff,
+    'ShieldAlert': ShieldAlert,
+    'BatteryCharging': BatteryCharging,
+}
+
+function VoltageContent() {
     const { voltageStatus, currentVoltageEvent, triggerVoltage, resetVoltage } = useGameStore()
+    
+    // Get icon component by name
+    const getIconComponent = () => {
+        if (!currentVoltageEvent?.icon) return null
+        // If icon is already a component, use it
+        if (typeof currentVoltageEvent.icon === 'function') {
+            return currentVoltageEvent.icon
+        }
+        // If icon is serialized, try to get from map
+        const iconName = (currentVoltageEvent.icon as any).name || 'Activity'
+        return iconMap[iconName] || Activity
+    }
+    
+    const EventIcon = getIconComponent()
 
     return (
         <div className="h-screen w-full relative flex flex-col items-center justify-center bg-slate-950 overflow-hidden px-8">
 
             {/* High Voltage Grid Background */}
             <div className="absolute inset-0 opacity-20 pointer-events-none">
-                <div className="absolute inset-0 bg-[linear-gradient(rgba(245,158,11,0.05)_1px,transparent_1px),linear-gradient(90deg,rgba(245,158,11,0.05)_1px,transparent_1px)] bg-[size:40px_40px]" />
+                <div className="absolute inset-0 bg-[linear-gradient(rgba(245,158,11,0.05)_1px,transparent_1px),linear-gradient(90deg,rgba(245,158,11,0.05)_1px,transparent_1px)] bg-size-[40px_40px]" />
                 <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(245,158,11,0.1),transparent_70%)]" />
             </div>
 
@@ -45,7 +69,7 @@ export default function Voltage() {
                                         initial={{ height: "0%" }}
                                         animate={{ height: "100%" }}
                                         transition={{ duration: 3, ease: "linear" }}
-                                        className="absolute bottom-0 left-0 w-full bg-gradient-to-t from-orange-600 via-amber-500 to-yellow-400 shadow-[0_0_50px_rgba(245,158,11,0.5)]"
+                                        className="absolute bottom-0 left-0 w-full bg-linear-to-t from-orange-600 via-amber-500 to-yellow-400 shadow-[0_0_50px_rgba(245,158,11,0.5)]"
                                     >
                                         {/* Electric Arcs effect during charging */}
                                         <div className="absolute top-0 left-0 w-full h-1 bg-white blur-[2px] opacity-80" />
@@ -99,8 +123,8 @@ export default function Voltage() {
                                 {/* Background System Scannelines */}
                                 <div className="absolute inset-0 bg-[repeating-linear-gradient(transparent,transparent_2px,rgba(255,255,255,0.02)_2px,rgba(255,255,255,0.02)_4px)] pointer-events-none" />
 
-                                <div className={`w-20 h-20 rounded-2xl bg-gradient-to-br ${currentVoltageEvent?.color} flex items-center justify-center mb-8 shadow-2xl rotate-3`}>
-                                    {currentVoltageEvent && <currentVoltageEvent.icon className="w-10 h-10 text-white" />}
+                                <div className={`w-20 h-20 rounded-2xl bg-linear-to-br ${currentVoltageEvent?.color} flex items-center justify-center mb-8 shadow-2xl rotate-3`}>
+                                    {EventIcon && <EventIcon className="w-10 h-10 text-white" />}
                                 </div>
 
                                 <div className="space-y-4">
@@ -110,11 +134,11 @@ export default function Voltage() {
                                         <Activity className="w-4 h-4 text-slate-500" />
                                     </div>
                                     <h2 className="text-6xl font-black text-white tracking-tighter uppercase italic">
-                                        {currentVoltageEvent?.title}
+                                        {currentVoltageEvent?.title || 'Power Surge'}
                                     </h2>
                                     <div className="h-0.5 w-32 bg-slate-800 mx-auto" />
                                     <p className="text-xl text-slate-400 font-medium max-w-md leading-relaxed uppercase tracking-wide">
-                                        {currentVoltageEvent?.description}
+                                        {currentVoltageEvent?.description || 'Energy levels stabilizing...'}
                                     </p>
                                 </div>
 
@@ -138,5 +162,11 @@ export default function Voltage() {
                 )}
             </AnimatePresence>
         </div>
+    )
+}
+
+export default function VoltagePage() {
+    return (
+        <VoltageContent />
     )
 }

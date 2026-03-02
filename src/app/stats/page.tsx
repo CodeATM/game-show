@@ -1,3 +1,5 @@
+'use client'
+
 import React from 'react'
 import { motion } from 'framer-motion'
 import {
@@ -50,12 +52,34 @@ function StatCard({ title, value, icon: Icon, color, trend }: StatCardProps) {
     )
 }
 
-export default function Stats() {
-    const { players, rollCount } = useGameStore()
+function Badge({ children, className }: { children: React.ReactNode, className?: string }) {
+    return (
+        <span className={`px-2.5 py-1 rounded-md font-black ${className}`}>
+            {children}
+        </span>
+    )
+}
+
+function StatsContent() {
+    const players = useGameStore(state => state.players)
+    const rollCount = useGameStore(state => state.rollCount)
+
+    if (!players || players.length === 0) {
+        return (
+            <div className="h-full w-full flex items-center justify-center bg-slate-950 text-slate-500 font-sans">
+                <div className="text-center space-y-4">
+                    <Trophy className="w-12 h-12 mx-auto opacity-20" />
+                    <p className="text-xs font-black uppercase tracking-[0.3em]">No player data available</p>
+                </div>
+            </div>
+        )
+    }
 
     const totalCoins = players.reduce((acc, p) => acc + p.coins, 0)
     const activeLeader = [...players].sort((a, b) => b.coins - a.coins)[0]
-    const avgLuck = Math.round(players.reduce((acc, p) => acc + p.luckScore, 0) / players.length)
+    const avgLuck = players.length > 0
+        ? Math.round(players.reduce((acc, p) => acc + p.luckScore, 0) / players.length)
+        : 0
 
     return (
         <div className="h-full w-full relative flex flex-col bg-slate-950 overflow-hidden font-sans">
@@ -193,7 +217,7 @@ export default function Stats() {
                                             <motion.div
                                                 initial={{ width: 0 }}
                                                 animate={{ width: `${p.luckScore}%` }}
-                                                className={`h-full bg-gradient-to-r ${p.id === 1 ? 'from-amber-400 to-orange-500' : p.id === 2 ? 'from-rose-400 to-red-500' : p.id === 3 ? 'from-emerald-400 to-teal-500' : 'from-blue-400 to-indigo-500'}`}
+                                                className={`h-full bg-linear-to-r ${p.id === 1 ? 'from-amber-400 to-orange-500' : p.id === 2 ? 'from-rose-400 to-red-500' : p.id === 3 ? 'from-emerald-400 to-teal-500' : 'from-blue-400 to-indigo-500'}`}
                                             />
                                         </div>
                                     </div>
@@ -213,10 +237,8 @@ export default function Stats() {
     )
 }
 
-function Badge({ children, className }: { children: React.ReactNode, className?: string }) {
+export default function StatsPage() {
     return (
-        <span className={`px-2.5 py-1 rounded-md font-black ${className}`}>
-            {children}
-        </span>
+        <StatsContent />
     )
 }

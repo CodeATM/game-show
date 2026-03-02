@@ -1,8 +1,8 @@
+'use client'
+
 import { motion } from 'framer-motion'
 import { useGameStore } from '@/store/gameStore'
 import { HelpCircle, AlertCircle, TrendingUp, TrendingDown } from 'lucide-react'
-
-
 
 interface TileProps {
     id: number
@@ -104,7 +104,7 @@ function Tile({ id, type, label, playersOnTile, isActiveTile, activeColor }: Til
     )
 }
 
-export default function Tiles() {
+export default function TilesPage() {
     const { boardConfig, players } = useGameStore()
 
     return (

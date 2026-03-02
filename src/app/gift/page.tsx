@@ -1,11 +1,35 @@
+'use client'
+
 import { motion, AnimatePresence } from 'framer-motion'
 import { useMemo } from 'react'
-import { Gift as GiftIcon, RotateCcw, Sparkles, Star } from 'lucide-react'
+import { Gift as GiftIcon, RotateCcw, Sparkles, Star, ArrowRight, ShieldAlert, Activity, Wallet } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useGameStore } from '@/store/gameStore'
 
-export default function Gift() {
+// Icon mapping to handle serialization issues
+const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
+    'ArrowRight': ArrowRight,
+    'ShieldAlert': ShieldAlert,
+    'Activity': Activity,
+    'Wallet': Wallet,
+}
+
+export default function GiftPage() {
     const { giftStatus, currentGiftEvent, triggerGift, resetGift } = useGameStore()
+    
+    // Get icon component by name
+    const getIconComponent = () => {
+        if (!currentGiftEvent?.icon) return null
+        // If icon is already a component, use it
+        if (typeof currentGiftEvent.icon === 'function') {
+            return currentGiftEvent.icon
+        }
+        // If icon is serialized, try to get from map
+        const iconName = (currentGiftEvent.icon as any).name || 'ArrowRight'
+        return iconMap[iconName] || ArrowRight
+    }
+    
+    const EventIcon = getIconComponent()
 
     const decorativeParticles = useMemo(() => [
         { startY: 800, x: -50, duration: 6, delay: 1, size: 8 },
@@ -133,7 +157,7 @@ export default function Gift() {
                         className="w-full max-w-xl flex flex-col items-center"
                     >
                         {/* Premium Reward Card */}
-                        <div className={`w-full aspect-[16/10] p-1.5 rounded-[3rem] bg-gradient-to-br ${currentGiftEvent?.color} shadow-[0_0_100px_rgba(236,72,153,0.4)] relative`}>
+                        <div className={`w-full aspect-16/10 p-1.5 rounded-[3rem] bg-linear-to-br ${currentGiftEvent?.color} shadow-[0_0_100px_rgba(236,72,153,0.4)] relative`}>
                             <div className="w-full h-full bg-slate-950/95 backdrop-blur-2xl rounded-[2.8rem] p-12 flex flex-col items-center justify-center text-center relative overflow-hidden">
 
                                 {/* Confetti Pattern Background */}
@@ -143,18 +167,18 @@ export default function Gift() {
                                     initial={{ scale: 0 }}
                                     animate={{ scale: 1 }}
                                     transition={{ delay: 0.2, type: "spring" }}
-                                    className={`w-24 h-24 rounded-3xl bg-gradient-to-br ${currentGiftEvent?.color} flex items-center justify-center mb-10 shadow-2xl ring-8 ring-white/5`}
+                                    className={`w-24 h-24 rounded-3xl bg-linear-to-br ${currentGiftEvent?.color} flex items-center justify-center mb-10 shadow-2xl ring-8 ring-white/5`}
                                 >
-                                    {currentGiftEvent && <currentGiftEvent.icon className="w-12 h-12 text-white" />}
+                                    {EventIcon && <EventIcon className="w-12 h-12 text-white" />}
                                 </motion.div>
 
                                 <div className="space-y-4">
                                     <h3 className="text-pink-500 text-xs font-black uppercase tracking-[0.5em]">Loot Unlocked</h3>
                                     <h2 className="text-5xl font-black text-white tracking-tighter italic uppercase">
-                                        {currentGiftEvent?.title}
+                                        {currentGiftEvent?.title || 'Mystery Gift'}
                                     </h2>
                                     <p className="text-xl text-slate-300 font-medium leading-relaxed max-w-xs mx-auto">
-                                        {currentGiftEvent?.description}
+                                        {currentGiftEvent?.description || 'Unwrapping the surprise...'}
                                     </p>
                                 </div>
 

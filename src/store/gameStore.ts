@@ -143,63 +143,76 @@ export const useGameStore = create<GameState>()(
 
             movePlayerWithDice: (playerId, roll) => {
                 if (get().isProcessingDice) return;
-                set({ isProcessingDice: true });
+                set({ isProcessingDice: true, isRolling: false, lastRoll: roll });
 
-                set((state) => {
-                    const currentPlayer = state.players.find(p => p.id === playerId);
-                    if (!currentPlayer) {
-                        set({ isProcessingDice: false });
-                        return state;
-                    }
-
-                    const newPosition = Math.min(100, Math.max(0, currentPlayer.position + roll));
-
-                    let nextPlayers = state.players.map(p => {
-                        if (p.id === playerId) {
-                            return {
-                                ...p,
-                                position: newPosition,
-                                totalRolls: p.totalRolls + 1,
-                                isActive: roll === 6
-                            };
-                        }
-                        // Default all others to inactive to ensure only one active player
-                        return { ...p, isActive: false };
-                    });
-
-                    if (roll < 6) {
-                        const nextPlayerId = (playerId % state.players.length) + 1;
-                        nextPlayers = nextPlayers.map(p => ({
-                            ...p,
-                            isActive: p.id === nextPlayerId
-                        }));
-                    }
-
-                    return {
-                        players: nextPlayers,
-                        lastRoll: roll,
-                        rollCount: state.rollCount + 1
-                    };
-                });
-
-                // Small cooldown to prevent rapid multi-clicks
-                setTimeout(() => {
-                    const latestState = get();
+                const state = get();
+                const currentPlayer = state.players.find(p => p.id === playerId);
+                if (!currentPlayer) {
                     set({ isProcessingDice: false });
+                    return;
+                }
 
-                    // Auto-trigger events based on current active player's position
-                    // We check the player who just moved (playerId)
-                    const player = latestState.players.find(p => p.id === playerId);
-                    if (player && player.position > 0) {
-                        const tile = latestState.boardConfig[player.position - 1];
-                        if (tile) {
-                            if (tile.type === 'chance') latestState.triggerChance();
-                            if (tile.type === 'quiz') latestState.triggerBrainiac();
-                            if (tile.type === 'ladder') latestState.triggerVoltage();
-                            if (tile.type === 'snake') latestState.triggerGift();
-                        }
+                const targetPosition = Math.min(100, Math.max(0, currentPlayer.position + roll));
+                const steps = roll;
+                let currentStep = 0;
+
+                const performStep = () => {
+                    if (currentStep >= steps) {
+                        // Animation finished
+                        set((state) => {
+                            let nextPlayers = state.players.map(p => {
+                                if (p.id === playerId) {
+                                    return {
+                                        ...p,
+                                        totalRolls: p.totalRolls + 1,
+                                        isActive: roll === 6
+                                    };
+                                }
+                                return { ...p, isActive: false };
+                            });
+
+                            if (roll < 6) {
+                                const nextPlayerId = (playerId % state.players.length) + 1;
+                                nextPlayers = nextPlayers.map(p => ({
+                                    ...p,
+                                    isActive: p.id === nextPlayerId
+                                }));
+                            }
+                            return { players: nextPlayers, rollCount: state.rollCount + 1 };
+                        });
+
+                        // Trigger events after short delay
+                        setTimeout(() => {
+                            set({ isProcessingDice: false });
+                            const latestState = get();
+                            const player = latestState.players.find(p => p.id === playerId);
+                            if (player && player.position > 0) {
+                                const tile = latestState.boardConfig[player.position - 1];
+                                if (tile) {
+                                    if (tile.type === 'chance') latestState.triggerChance();
+                                    if (tile.type === 'quiz') latestState.triggerBrainiac();
+                                    if (tile.type === 'ladder') latestState.triggerVoltage();
+                                    if (tile.type === 'snake') latestState.triggerGift();
+                                }
+                            }
+                        }, 400);
+                        return;
                     }
-                }, 500);
+
+                    // Move one step
+                    currentStep++;
+                    set((state) => ({
+                        players: state.players.map(p =>
+                            p.id === playerId ? { ...p, position: Math.min(100, p.position + 1) } : p
+                        )
+                    }));
+
+                    // Schedule next step
+                    setTimeout(performStep, 350);
+                };
+
+                // Start the sequence
+                performStep();
             },
 
             setTileConfig: (tileId, config) => set((state) => ({
@@ -266,6 +279,12 @@ export const useGameStore = create<GameState>()(
                         currentChanceEvent: selectedEvent,
                         chanceStatus: 'spinning'
                     })
+                    // Auto-reveal after 3 seconds
+                    setTimeout(() => {
+                        if (get().chanceStatus === 'spinning') {
+                            set({ chanceStatus: 'revealed' })
+                        }
+                    }, 3000)
                 } else if (chanceStatus === 'spinning') {
                     set({ chanceStatus: 'revealed' })
                 }
@@ -289,6 +308,12 @@ export const useGameStore = create<GameState>()(
                         currentBrainiacEvent: selectedEvent,
                         brainiacStatus: 'thinking'
                     })
+                    // Auto-reveal after 3 seconds
+                    setTimeout(() => {
+                        if (get().brainiacStatus === 'thinking') {
+                            set({ brainiacStatus: 'revealed' })
+                        }
+                    }, 3000)
                 } else if (brainiacStatus === 'thinking') {
                     set({ brainiacStatus: 'revealed' })
                 }
@@ -312,6 +337,12 @@ export const useGameStore = create<GameState>()(
                         currentVoltageEvent: selectedEvent,
                         voltageStatus: 'charging'
                     })
+                    // Auto-reveal after 3.5 seconds (battery fill animation is 3s)
+                    setTimeout(() => {
+                        if (get().voltageStatus === 'charging') {
+                            set({ voltageStatus: 'revealed' })
+                        }
+                    }, 3500)
                 } else if (voltageStatus === 'charging') {
                     set({ voltageStatus: 'revealed' })
                 }
@@ -335,6 +366,12 @@ export const useGameStore = create<GameState>()(
                         currentGiftEvent: selectedEvent,
                         giftStatus: 'shaking'
                     })
+                    // Auto-reveal after 3 seconds
+                    setTimeout(() => {
+                        if (get().giftStatus === 'shaking') {
+                            set({ giftStatus: 'revealed' })
+                        }
+                    }, 3000)
                 } else if (giftStatus === 'shaking') {
                     set({ giftStatus: 'revealed' })
                 }

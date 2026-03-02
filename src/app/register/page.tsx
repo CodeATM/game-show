@@ -1,23 +1,25 @@
-import React, { useState } from 'react'
+'use client'
+
+import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { useNavigate } from 'react-router-dom'
+import { useRouter } from 'next/navigation'
 import { User, Sparkles, ChevronRight, Trophy, Star, Activity } from 'lucide-react'
 import { useGameStore } from '@/store/gameStore'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input.tsx'
+import { Input } from '@/components/ui/input'
 
-export default function Register() {
+export default function RegisterPage() {
     const [name, setName] = useState('')
     const [sessionId, setSessionId] = useState('')
     const { setActivePlayerName, setGameSessionId } = useGameStore()
-    const navigate = useNavigate()
+    const router = useRouter()
 
     const handleJoin = (e: React.FormEvent) => {
         e.preventDefault()
         if (name.trim() && sessionId.trim()) {
             setActivePlayerName(name.trim())
             setGameSessionId(sessionId.trim())
-            navigate('/dice')
+            router.push('/dice')
         }
     }
 

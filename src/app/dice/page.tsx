@@ -1,17 +1,20 @@
-import { useCallback } from 'react'
+'use client'
+
+import { useCallback, useMemo } from 'react'
 import Dice from 'modern-react-dice-roll'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { RotateCcw } from 'lucide-react'
 import { useGameStore } from '@/store/gameStore'
+import { memo, useRef } from 'react'
 
-// Languid,// Premium motion constants
+// Premium motion constants
 const springConfig = { type: "spring", damping: 30, stiffness: 80, mass: 1.2 } as const;
 const smoothTransition = { duration: 0.8, ease: [0.16, 1, 0.3, 1] } as const;
 
-function PlayerStatsBar() {
-  const { players } = useGameStore()
+const PlayerStatsBar = memo(function PlayerStatsBar() {
+  const players = useGameStore(state => state.players)
 
   return (
     <div className="absolute top-8 right-8 z-50 flex flex-col gap-3">
@@ -68,31 +71,52 @@ function PlayerStatsBar() {
       ))}
     </div>
   );
+});
+
+interface StableDiceProps {
+  handleRoll: (value: number) => void;
+  defaultValue: 1 | 2 | 3 | 4 | 5 | 6;
+  triggers: string[];
 }
 
-export default function DiceRoller() {
-  const {
-    lastRoll,
-    rollCount,
-    isRolling,
-    movePlayerWithDice,
-    setIsRolling,
-    resetGame
-  } = useGameStore()
+const StableDice = memo(function StableDice({ handleRoll, defaultValue, triggers }: StableDiceProps) {
+  return (
+    <Dice
+      onRoll={handleRoll}
+      size={340}
+      rollingTime={2500}
+      defaultValue={defaultValue}
+      triggers={triggers}
+    />
+  );
+});
+
+export default function DicePage() {
+  const lastRoll = useGameStore(state => state.lastRoll)
+  const rollCount = useGameStore(state => state.rollCount)
+  const isRolling = useGameStore(state => state.isRolling)
+  const movePlayerWithDice = useGameStore(state => state.movePlayerWithDice)
+  const setIsRolling = useGameStore(state => state.setIsRolling)
+  const resetGame = useGameStore(state => state.resetGame)
+
+  const initialDiceValue = useRef((lastRoll || 1) as 1 | 2 | 3 | 4 | 5 | 6)
 
   const handleRoll = useCallback((value: number) => {
-    const activePlayer = useGameStore.getState().players.find(p => p.isActive)
+    // Determine active player ID at call time to avoid dependency on players array
+    const state = useGameStore.getState()
+    const activePlayer = state.players.find(p => p.isActive)
     if (activePlayer) {
       movePlayerWithDice(activePlayer.id, value)
     }
-    setIsRolling(false)
-  }, [movePlayerWithDice, setIsRolling])
+  }, [movePlayerWithDice])
 
-  const startRolling = () => {
-    if (!isRolling) {
+  const startRolling = useCallback(() => {
+    if (!useGameStore.getState().isRolling) {
       setIsRolling(true)
     }
-  }
+  }, [setIsRolling])
+
+  const triggers = useMemo(() => ['click', 'r', 'spacebar'], [])
 
   return (
     <div className="h-screen w-full relative flex flex-col bg-[radial-gradient(circle_at_50%_50%,rgba(99,102,241,0.1),transparent_70%)] bg-slate-950 overflow-hidden selection:bg-indigo-500/30">
@@ -145,12 +169,10 @@ export default function DiceRoller() {
             />
 
             <div className="p-8 select-none">
-              <Dice
-                onRoll={handleRoll}
-                size={340}
-                rollingTime={2500}
-                defaultValue={(lastRoll || 1) as 1 | 2 | 3 | 4 | 5 | 6}
-                triggers={['click', 'r', 'spacebar']}
+              <StableDice
+                handleRoll={handleRoll}
+                defaultValue={initialDiceValue.current}
+                triggers={triggers}
               />
             </div>
           </motion.div>
