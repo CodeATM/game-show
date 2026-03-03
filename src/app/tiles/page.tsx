@@ -11,7 +11,7 @@ interface TileProps {
     playersOnTile: number[]
     isActiveTile?: boolean
     activeColor?: string
-    theme: 'light' | 'dark' | 'groups'
+    theme: 'light' | 'dark' | 'z1' | 'z2'
 }
 
 function Tile({ id, type, label, playersOnTile, isActiveTile, activeColor, theme }: TileProps) {
@@ -24,7 +24,7 @@ function Tile({ id, type, label, playersOnTile, isActiveTile, activeColor, theme
                 case 'ladder': return 'border-emerald-400 bg-emerald-500/15 text-white shadow-[0_0_15px_rgba(52,211,153,0.1)]'
                 default: return 'border-white/10 bg-slate-900/60 text-white'
             }
-        } else if (theme === 'groups') {
+        } else if (theme === 'z1' || theme === 'z2') {
             if (type !== 'normal') {
                 switch (type) {
                     case 'chance': return 'border-amber-500 bg-amber-600/40 text-black shadow-[0_0_15px_rgba(245,158,11,0.3)]'
@@ -37,14 +37,27 @@ function Tile({ id, type, label, playersOnTile, isActiveTile, activeColor, theme
             const tileNum = id + 1;
             let baseStyle = '';
 
-            if (tileNum <= 20) {
-                baseStyle = 'border-[#A8A8A8] bg-[#A8A8A8]/80 text-black shadow-sm';
-            } else if (tileNum <= 50) {
-                baseStyle = 'border-[#FFEF00] bg-[#FFEF00]/80 text-black shadow-sm';
-            } else if (tileNum <= 80) {
-                baseStyle = 'border-[#00FF7F] bg-[#00FF7F]/80 text-black shadow-sm';
+            if (theme === 'z1') {
+                if (tileNum <= 20) {
+                    baseStyle = 'border-[#A8A8A8] bg-[#A8A8A8]/80 text-black shadow-sm';
+                } else if (tileNum <= 50) {
+                    baseStyle = 'border-[#FFEF00] bg-[#FFEF00]/80 text-black shadow-sm';
+                } else if (tileNum <= 80) {
+                    baseStyle = 'border-[#00FF7F] bg-[#00FF7F]/80 text-black shadow-sm';
+                } else {
+                    baseStyle = 'border-[#E26F66] bg-[#E26F66]/80 text-black shadow-sm';
+                }
             } else {
-                baseStyle = 'border-[#E26F66] bg-[#E26F66]/80 text-black shadow-sm';
+                // z2 colors - specific hex codes as requested
+                if (tileNum <= 20) {
+                    baseStyle = 'border-[#DADFE5] bg-[#DADFE5] text-black shadow-sm';
+                } else if (tileNum <= 50) {
+                    baseStyle = 'border-[#FFF8B9] bg-[#FFF8B9] text-black shadow-sm';
+                } else if (tileNum <= 80) {
+                    baseStyle = 'border-[#C3FBE9] bg-[#C3FBE9] text-black shadow-sm';
+                } else {
+                    baseStyle = 'border-[#FFDFE0] bg-[#FFDFE0] text-black shadow-sm';
+                }
             }
 
             return baseStyle;
@@ -83,11 +96,12 @@ function Tile({ id, type, label, playersOnTile, isActiveTile, activeColor, theme
             whileHover={{ scale: 1.02, backgroundColor: "rgba(255,255,255,0.05)" }}
             className={`relative flex flex-col items-center justify-center rounded-lg border transition-all duration-300 min-h-0 min-w-0 overflow-hidden backdrop-blur-md ${getStyles()} ${isActiveTile ? 'border-transparent shadow-none' : ''}`}
         >
-            {/* Glass Reflection Overlay */}
-            <div className="absolute inset-0 pointer-events-none rounded-lg z-0" style={{
-                background: 'linear-gradient(135deg, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0.1) 40%, rgba(255,255,255,0) 40.1%, rgba(255,255,255,0) 100%)',
-                boxShadow: 'inset 0px 1px 1px rgba(255,255,255,0.3), inset 0px -1px 2px rgba(0,0,0,0.1)'
-            }} />
+            {theme !== 'z2' && (
+                <div className="absolute inset-0 pointer-events-none rounded-lg z-0" style={{
+                    background: 'linear-gradient(135deg, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0.1) 40%, rgba(255,255,255,0) 40.1%, rgba(255,255,255,0) 100%)',
+                    boxShadow: 'inset 0px 1px 1px rgba(255,255,255,0.3), inset 0px -1px 2px rgba(0,0,0,0.1)'
+                }} />
+            )}
             {/* Neon Strip Light Animation */}
             {isActiveTile && (
                 <div className="absolute inset-0 rounded-lg pointer-events-none">
@@ -148,8 +162,9 @@ export default function TilesPage() {
     const { boardConfig, players, boardTheme } = useGameStore()
 
     const isLight = boardTheme === 'light'
-    const isGroups = boardTheme === 'groups'
-    const isLightBg = isLight || isGroups
+    const isZ1 = boardTheme === 'z1'
+    const isZ2 = boardTheme === 'z2'
+    const isLightBg = isLight || isZ1 || isZ2
 
     return (
         <div className={`h-screen w-full relative flex flex-col items-center justify-center transition-colors duration-700 overflow-hidden selection:bg-indigo-500/30 p-2 sm:p-4 md:p-6 lg:p-8 ${isLightBg

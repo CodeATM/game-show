@@ -5,6 +5,8 @@ import { useMemo } from 'react'
 import { Zap, RotateCcw, ArrowRight, Wallet, UserMinus, Repeat } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useGameStore } from '@/store/gameStore'
+import { audioManager } from '@/audioManager'
+import { useEffect } from 'react'
 
 // Icon mapping to handle serialization issues
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -16,8 +18,28 @@ const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
 }
 
 export default function ChancePage() {
-    const { chanceStatus, currentChanceEvent, triggerChance, resetChance } = useGameStore()
-    
+    const { chanceStatus, currentChanceEvent, triggerChance, resetChance, audioFeedbackEnabled } = useGameStore()
+
+    useEffect(() => {
+        if (!audioFeedbackEnabled) {
+            audioManager.stop('chance_animation');
+            return;
+        }
+
+        if (chanceStatus === 'spinning') {
+            audioManager.playLoop('chance_animation');
+        } else {
+            audioManager.stop('chance_animation');
+            if (chanceStatus === 'revealed') {
+                audioManager.play('reveal_event');
+            }
+        }
+
+        return () => {
+            audioManager.stop('chance_animation');
+        };
+    }, [chanceStatus, audioFeedbackEnabled]);
+
     // Get icon component by name
     const getIconComponent = () => {
         if (!currentChanceEvent?.icon) return null
@@ -29,7 +51,7 @@ export default function ChancePage() {
         const iconName = (currentChanceEvent.icon as any).name || 'Zap'
         return iconMap[iconName] || Zap
     }
-    
+
     const EventIcon = getIconComponent()
 
     const sparks = useMemo(() => [
@@ -75,7 +97,7 @@ export default function ChancePage() {
                             transition: { duration: 0.5, ease: "easeIn" }
                         }}
                         className="relative group cursor-pointer"
-                        onClick={triggerChance}
+                        onClick={() => triggerChance()}
                     >
                         {/* Power Aura / Pulsing Rings */}
                         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">

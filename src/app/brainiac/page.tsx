@@ -5,6 +5,8 @@ import { useMemo } from 'react'
 import { Lightbulb, RotateCcw, BrainCircuit, GraduationCap } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useGameStore } from '@/store/gameStore'
+import { audioManager } from '@/audioManager'
+import { useEffect } from 'react'
 
 // Icon mapping to handle serialization issues
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -14,8 +16,28 @@ const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
 }
 
 export default function BrainiacPage() {
-    const { brainiacStatus, currentBrainiacEvent, triggerBrainiac, resetBrainiac } = useGameStore()
-    
+    const { brainiacStatus, currentBrainiacEvent, triggerBrainiac, resetBrainiac, audioFeedbackEnabled } = useGameStore()
+
+    useEffect(() => {
+        if (!audioFeedbackEnabled) {
+            audioManager.stop('brainiac_animation');
+            return;
+        }
+
+        if (brainiacStatus === 'thinking') {
+            audioManager.playLoop('brainiac_animation');
+        } else {
+            audioManager.stop('brainiac_animation');
+            if (brainiacStatus === 'revealed') {
+                audioManager.play('reveal_event');
+            }
+        }
+
+        return () => {
+            audioManager.stop('brainiac_animation');
+        };
+    }, [brainiacStatus, audioFeedbackEnabled]);
+
     // Get icon component by name
     const getIconComponent = () => {
         if (!currentBrainiacEvent?.icon) return null
@@ -27,7 +49,7 @@ export default function BrainiacPage() {
         const iconName = (currentBrainiacEvent.icon as any).name || 'BrainCircuit'
         return iconMap[iconName] || BrainCircuit
     }
-    
+
     const EventIcon = getIconComponent()
 
     const sparks = useMemo(() => [
@@ -75,7 +97,7 @@ export default function BrainiacPage() {
                             transition: { duration: 0.5, ease: "easeIn" }
                         }}
                         className="relative group cursor-pointer"
-                        onClick={triggerBrainiac}
+                        onClick={() => triggerBrainiac()}
                     >
                         {/* Wisdom Aura / Pulsing Rings */}
                         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
@@ -160,7 +182,7 @@ export default function BrainiacPage() {
                         className="w-full max-w-xl flex flex-col items-center"
                     >
                         {/* Question Card */}
-                        <div className={`w-full aspect-16/10 p-1 rounded-[2.5rem] bg-linear-gradient-to-br ${currentBrainiacEvent?.color} shadow-[0_0_100px_rgba(59,130,246,0.5)] relative overflow-hidden`}>
+                        <div className={`w-full aspect-16/10 p-1 rounded-[2.5rem] bg-linear-to-br ${currentBrainiacEvent?.color} shadow-[0_0_100px_rgba(59,130,246,0.5)] relative overflow-hidden`}>
                             {/* Geometric Background pattern */}
                             <div className="absolute inset-0 opacity-10 pointer-events-none">
                                 <div className="grid grid-cols-6 grid-rows-4 h-full w-full">
@@ -172,7 +194,7 @@ export default function BrainiacPage() {
 
                             <div className="w-full h-full bg-slate-950/90 backdrop-blur-xl rounded-[2.4rem] p-10 flex flex-col items-center justify-center text-center relative z-10">
 
-                                <div className={`p-6 rounded-full bg-linear-gradient-to-br ${currentBrainiacEvent?.color} mb-8 shadow-2xl ring-4 ring-white/10`}>
+                                <div className={`p-6 rounded-full bg-linear-to-br ${currentBrainiacEvent?.color} mb-8 shadow-2xl ring-4 ring-white/10`}>
                                     {EventIcon && <EventIcon className="w-14 h-14 text-white" />}
                                 </div>
 

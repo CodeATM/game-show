@@ -72,9 +72,13 @@ interface GameState {
         snake: string
     }
 
-    boardTheme: 'light' | 'dark' | 'groups'
+    boardTheme: 'light' | 'dark' | 'z1' | 'z2'
 
     mappings: Record<string, InputMapping | null>
+    midiStatus: 'unsupported' | 'disconnected' | 'connected'
+    midiDeviceName: string | null
+    lastMidiSignalTime: number
+    audioFeedbackEnabled: boolean
 
     // Actions
     setLastRoll: (value: number) => void
@@ -110,10 +114,15 @@ interface GameState {
     setEventLabel: (type: 'chance' | 'quiz' | 'ladder' | 'snake', label: string) => void
 
     // Theme Actions
-    setBoardTheme: (theme: 'light' | 'dark' | 'groups') => void
+    setBoardTheme: (theme: 'light' | 'dark' | 'z1' | 'z2') => void
 
     // Mappings
     updateMapping: (actionId: string, mapping: InputMapping | null) => void
+
+    // MIDI Status
+    setMidiStatus: (status: 'unsupported' | 'disconnected' | 'connected', deviceName?: string | null) => void
+    triggerMidiSignal: () => void
+    toggleAudioFeedback: () => void
 }
 
 export const useGameStore = create<GameState>()(
@@ -123,10 +132,10 @@ export const useGameStore = create<GameState>()(
             rollCount: 0,
             isRolling: false,
             players: [
-                { id: 1, name: "Alpha", avatarSeed: "alpha-gamer", position: 0, coins: 500, totalRolls: 0, luckScore: 85, inventory: ["Shield", "Compass"], isActive: true, color: "indigo" },
-                { id: 2, name: "Bravo", avatarSeed: "bravo-knight", position: 0, coins: 250, totalRolls: 0, luckScore: 42, inventory: ["Sword"], isActive: false, color: "rose" },
-                { id: 3, name: "Charlie", avatarSeed: "charlie-wizard", position: 0, coins: 1200, totalRolls: 0, luckScore: 91, inventory: ["Crown", "Gem"], isActive: false, color: "emerald" },
-                { id: 4, name: "Delta", avatarSeed: "delta-rogue", position: 0, coins: 50, totalRolls: 0, luckScore: 15, inventory: [], isActive: false, color: "amber" },
+                { id: 1, name: "Alpha", avatarSeed: "alpha", position: 0, coins: 500, totalRolls: 0, luckScore: 85, inventory: ["Shield", "Compass"], isActive: true, color: "indigo" },
+                { id: 2, name: "Bravo", avatarSeed: "bravo", position: 0, coins: 250, totalRolls: 0, luckScore: 42, inventory: ["Sword"], isActive: false, color: "rose" },
+                { id: 3, name: "Charlie", avatarSeed: "charlie", position: 0, coins: 1200, totalRolls: 0, luckScore: 91, inventory: ["Crown", "Gem"], isActive: false, color: "emerald" },
+                { id: 4, name: "Delta", avatarSeed: "delta", position: 0, coins: 50, totalRolls: 0, luckScore: 15, inventory: [], isActive: false, color: "amber" },
             ],
             boardConfig: Array.from({ length: 100 }, (_, i) => {
                 const id = i + 1;
@@ -165,6 +174,10 @@ export const useGameStore = create<GameState>()(
             boardTheme: 'dark',
 
             mappings: {},
+            midiStatus: 'disconnected',
+            midiDeviceName: null,
+            lastMidiSignalTime: 0,
+            audioFeedbackEnabled: true,
 
             setLastRoll: (value) => set({ lastRoll: value }),
             incrementRollCount: () => set((state) => ({ rollCount: state.rollCount + 1 })),
@@ -269,10 +282,10 @@ export const useGameStore = create<GameState>()(
                 rollCount: 0,
                 isRolling: false,
                 players: [
-                    { id: 1, name: "Alpha", avatarSeed: "alpha-gamer", position: 0, coins: 500, totalRolls: 0, luckScore: 85, inventory: ["Shield", "Compass"], isActive: true, color: "indigo" },
-                    { id: 2, name: "Bravo", avatarSeed: "bravo-knight", position: 0, coins: 250, totalRolls: 0, luckScore: 42, inventory: ["Sword"], isActive: false, color: "rose" },
-                    { id: 3, name: "Charlie", avatarSeed: "charlie-wizard", position: 0, coins: 1200, totalRolls: 0, luckScore: 91, inventory: ["Crown", "Gem"], isActive: false, color: "emerald" },
-                    { id: 4, name: "Delta", avatarSeed: "delta-rogue", position: 0, coins: 50, totalRolls: 0, luckScore: 15, inventory: [], isActive: false, color: "amber" },
+                    { id: 1, name: "Alpha", avatarSeed: "alpha", position: 0, coins: 500, totalRolls: 0, luckScore: 85, inventory: ["Shield", "Compass"], isActive: true, color: "indigo" },
+                    { id: 2, name: "Bravo", avatarSeed: "bravo", position: 0, coins: 250, totalRolls: 0, luckScore: 42, inventory: ["Sword"], isActive: false, color: "rose" },
+                    { id: 3, name: "Charlie", avatarSeed: "charlie", position: 0, coins: 1200, totalRolls: 0, luckScore: 91, inventory: ["Crown", "Gem"], isActive: false, color: "emerald" },
+                    { id: 4, name: "Delta", avatarSeed: "delta", position: 0, coins: 50, totalRolls: 0, luckScore: 15, inventory: [], isActive: false, color: "amber" },
                 ],
                 boardConfig: Array.from({ length: 100 }, (_, i) => {
                     const id = i + 1;
@@ -479,7 +492,11 @@ export const useGameStore = create<GameState>()(
                     ...state.mappings,
                     [actionId]: mapping
                 }
-            }))
+            })),
+
+            setMidiStatus: (status, deviceName = null) => set({ midiStatus: status, midiDeviceName: deviceName }),
+            triggerMidiSignal: () => set({ lastMidiSignalTime: Date.now() }),
+            toggleAudioFeedback: () => set((state) => ({ audioFeedbackEnabled: !state.audioFeedbackEnabled }))
         }),
         {
             name: 'game-storage',

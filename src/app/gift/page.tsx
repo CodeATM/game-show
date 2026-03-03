@@ -5,6 +5,8 @@ import { useMemo } from 'react'
 import { Gift as GiftIcon, RotateCcw, Sparkles, Star, ArrowRight, ShieldAlert, Activity, Wallet } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useGameStore } from '@/store/gameStore'
+import { audioManager } from '@/audioManager'
+import { useEffect } from 'react'
 
 // Icon mapping to handle serialization issues
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -15,8 +17,28 @@ const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
 }
 
 export default function GiftPage() {
-    const { giftStatus, currentGiftEvent, triggerGift, resetGift } = useGameStore()
-    
+    const { giftStatus, currentGiftEvent, triggerGift, resetGift, audioFeedbackEnabled } = useGameStore()
+
+    useEffect(() => {
+        if (!audioFeedbackEnabled) {
+            audioManager.stop('gift_animation');
+            return;
+        }
+
+        if (giftStatus === 'shaking') {
+            audioManager.playLoop('gift_animation');
+        } else {
+            audioManager.stop('gift_animation');
+            if (giftStatus === 'revealed') {
+                audioManager.play('reveal_event');
+            }
+        }
+
+        return () => {
+            audioManager.stop('gift_animation');
+        };
+    }, [giftStatus, audioFeedbackEnabled]);
+
     // Get icon component by name
     const getIconComponent = () => {
         if (!currentGiftEvent?.icon) return null
@@ -28,7 +50,7 @@ export default function GiftPage() {
         const iconName = (currentGiftEvent.icon as any).name || 'ArrowRight'
         return iconMap[iconName] || ArrowRight
     }
-    
+
     const EventIcon = getIconComponent()
 
     const decorativeParticles = useMemo(() => [
@@ -89,7 +111,7 @@ export default function GiftPage() {
                         {/* Shaking Gift Box */}
                         <motion.div
                             className="relative group cursor-pointer"
-                            onClick={triggerGift}
+                            onClick={() => triggerGift()}
                             animate={giftStatus === 'shaking' ? {
                                 x: [-2, 2, -2, 2, 0],
                                 rotate: [-5, 5, -5, 5, 0],
@@ -161,7 +183,7 @@ export default function GiftPage() {
                             <div className="w-full h-full bg-slate-950/95 backdrop-blur-2xl rounded-[2.8rem] p-12 flex flex-col items-center justify-center text-center relative overflow-hidden">
 
                                 {/* Confetti Pattern Background */}
-                                <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]" />
+                                <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-[url('/cubes.png')]" />
 
                                 <motion.div
                                     initial={{ scale: 0 }}

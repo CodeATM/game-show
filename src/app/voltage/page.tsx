@@ -4,6 +4,8 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { BatteryCharging, RotateCcw, AlertTriangle, Activity, ZapOff, ShieldAlert } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useGameStore } from '@/store/gameStore'
+import { audioManager } from '@/audioManager'
+import { useEffect } from 'react'
 
 // Icon mapping to handle serialization issues
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -14,8 +16,28 @@ const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
 }
 
 function VoltageContent() {
-    const { voltageStatus, currentVoltageEvent, triggerVoltage, resetVoltage } = useGameStore()
-    
+    const { voltageStatus, currentVoltageEvent, triggerVoltage, resetVoltage, audioFeedbackEnabled } = useGameStore()
+
+    useEffect(() => {
+        if (!audioFeedbackEnabled) {
+            audioManager.stop('vantage_animation');
+            return;
+        }
+
+        if (voltageStatus === 'charging') {
+            audioManager.playLoop('vantage_animation');
+        } else {
+            audioManager.stop('vantage_animation');
+            if (voltageStatus === 'revealed') {
+                audioManager.play('reveal_event');
+            }
+        }
+
+        return () => {
+            audioManager.stop('vantage_animation');
+        };
+    }, [voltageStatus, audioFeedbackEnabled]);
+
     // Get icon component by name
     const getIconComponent = () => {
         if (!currentVoltageEvent?.icon) return null
@@ -27,7 +49,7 @@ function VoltageContent() {
         const iconName = (currentVoltageEvent.icon as any).name || 'Activity'
         return iconMap[iconName] || Activity
     }
-    
+
     const EventIcon = getIconComponent()
 
     return (
@@ -57,7 +79,7 @@ function VoltageContent() {
                         {/* Battery Container */}
                         <div
                             className="relative w-48 h-80 rounded-[2.5rem] border-4 border-slate-800 bg-slate-900/50 p-3 group cursor-pointer"
-                            onClick={triggerVoltage}
+                            onClick={() => triggerVoltage()}
                         >
                             {/* Battery Tip */}
                             <div className="absolute -top-4 left-1/2 -translate-x-1/2 w-16 h-4 bg-slate-800 rounded-t-lg" />

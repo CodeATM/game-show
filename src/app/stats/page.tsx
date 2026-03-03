@@ -165,7 +165,7 @@ function StatsContent() {
 
                                     <div className="w-14 h-14 rounded-xl overflow-hidden border border-white/10 bg-slate-800 shrink-0">
                                         <img
-                                            src={`https://api.dicebear.com/9.x/adventurer/svg?seed=${player.avatarSeed}&backgroundColor=transparent`}
+                                            src={`/avatars/${player.avatarSeed}.svg`}
                                             alt={player.name}
                                             className="w-full h-full object-cover"
                                         />

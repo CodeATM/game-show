@@ -22,8 +22,11 @@ import {
     Settings2,
     Keyboard,
     Music,
-    X
+    X,
+    Volume2,
+    VolumeX
 } from 'lucide-react'
+import { audioManager } from '@/audioManager'
 import { useGameStore, type TileConfig } from '@/store/gameStore'
 import { useInputController } from '@/hooks/useInputController'
 import { AnimatePresence } from 'framer-motion'
@@ -289,7 +292,12 @@ function AdminContent() {
         giftStatus, triggerGift, resetGift,
         resetGame,
         mappings,
-        updateMapping
+        updateMapping,
+        midiStatus,
+        midiDeviceName,
+        lastMidiSignalTime,
+        audioFeedbackEnabled,
+        toggleAudioFeedback
     } = useGameStore()
 
     const [showAdvanced, setShowAdvanced] = React.useState(false)
@@ -378,14 +386,51 @@ function AdminContent() {
                         <p className="text-slate-500 font-medium uppercase tracking-[0.3em] text-[10px]">Real-time Event Management & State Control</p>
                     </div>
 
-                    <Button
-                        onClick={resetGame}
-                        variant="destructive"
-                        className="h-14 px-8 rounded-2xl font-black uppercase tracking-widest text-xs gap-3 shadow-2xl shadow-rose-500/20"
-                    >
-                        <RotateCcw className="w-5 h-5" />
-                        Hard Reset Game
-                    </Button>
+                    <div className="flex flex-col items-end gap-3">
+                        {/* Audio Toggle */}
+                        <Button
+                            onClick={() => {
+                                audioManager.init();
+                                toggleAudioFeedback();
+                            }}
+                            variant="ghost"
+                            className={`h-9 px-3 rounded-full border transition-all gap-2 ${audioFeedbackEnabled ? 'bg-indigo-500/10 border-indigo-500/30 text-indigo-400' : 'bg-white/5 border-white/10 text-slate-400'}`}
+                        >
+                            {audioFeedbackEnabled ? <Volume2 className="w-3.5 h-3.5" /> : <VolumeX className="w-3.5 h-3.5" />}
+                            <span className="text-[9px] font-black uppercase tracking-widest">
+                                {audioFeedbackEnabled ? 'Audio On' : 'Muted'}
+                            </span>
+                        </Button>
+
+                        {/* MIDI Status Indicator */}
+                        <div className="flex items-center gap-2 bg-white/5 px-3 py-1.5 rounded-full border border-white/10 group relative cursor-help">
+                            <motion.div
+                                className={`w-2 h-2 rounded-full shadow-[0_0_8px] ${midiStatus === 'connected' ? 'bg-green-500 shadow-green-500' :
+                                    midiStatus === 'disconnected' ? 'bg-amber-500 shadow-amber-500' :
+                                        'bg-rose-500 shadow-rose-500'
+                                    }`}
+                                animate={midiStatus === 'connected' ? { opacity: [1, 0.4, 1] } : {}}
+                                transition={{ duration: 2, repeat: Infinity }}
+                            />
+                            <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">
+                                MIDI: {midiStatus}
+                            </span>
+                            {midiStatus === 'connected' && midiDeviceName && (
+                                <div className="absolute bottom-full mb-2 right-0 bg-slate-800 text-[9px] font-bold py-1 px-2 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none text-indigo-300 border border-indigo-500/30">
+                                    {midiDeviceName}
+                                </div>
+                            )}
+                        </div>
+
+                        <Button
+                            onClick={resetGame}
+                            variant="destructive"
+                            className="h-14 px-8 rounded-2xl font-black uppercase tracking-widest text-xs gap-3 shadow-2xl shadow-rose-500/20"
+                        >
+                            <RotateCcw className="w-5 h-5" />
+                            Hard Reset Game
+                        </Button>
+                    </div>
                 </div>
 
                 {/* Participant Management */}
@@ -429,11 +474,20 @@ function AdminContent() {
                                 <Button
                                     variant="ghost"
                                     size="sm"
-                                    onClick={() => setBoardTheme('groups')}
-                                    className={`h-8 px-3 rounded-lg gap-2 transition-all ${boardTheme === 'groups' ? 'bg-emerald-500 text-white shadow-lg' : 'text-slate-500 hover:text-white'}`}
+                                    onClick={() => setBoardTheme('z1')}
+                                    className={`h-8 px-3 rounded-lg gap-2 transition-all ${boardTheme === 'z1' ? 'bg-emerald-500 text-white shadow-lg' : 'text-slate-500 hover:text-white'}`}
                                 >
                                     <Layers className="w-3.5 h-3.5" />
-                                    <span className="text-[10px] font-black uppercase tracking-widest">Zones</span>
+                                    <span className="text-[10px] font-black uppercase tracking-widest">Z1</span>
+                                </Button>
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => setBoardTheme('z2')}
+                                    className={`h-8 px-3 rounded-lg gap-2 transition-all ${boardTheme === 'z2' ? 'bg-emerald-500 text-white shadow-lg' : 'text-slate-500 hover:text-white'}`}
+                                >
+                                    <Layers className="w-3.5 h-3.5" />
+                                    <span className="text-[10px] font-black uppercase tracking-widest">Z2</span>
                                 </Button>
                             </div>
 
@@ -568,6 +622,7 @@ function AdminContent() {
                                 >
                                     {showMapping ? 'Hide Mappings' : 'Show Mappings'}
                                 </button>
+
                                 {showMapping && (
                                     <div className="space-y-3">
                                         {ACTIONS.map(action => (
@@ -699,7 +754,14 @@ function AdminContent() {
                                 transition={{ duration: 4, repeat: Infinity }}
                             />
                         </div>
-                        <span className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">Active Link</span>
+                        <motion.span
+                            key={lastMidiSignalTime}
+                            animate={{ scale: [1, 1.2, 1], color: ['#818cf8', '#ffffff', '#818cf8'] }}
+                            transition={{ duration: 0.2 }}
+                            className="text-[10px] font-black text-indigo-400 uppercase tracking-widest"
+                        >
+                            Active Link
+                        </motion.span>
                     </div>
                 </div>
 
