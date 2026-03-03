@@ -267,6 +267,7 @@ function PlayerCard({ player, updatePlayerName, updatePlayerPosition, movePlayer
 function AdminContent() {
     useInputController()
     const [showMapping, setShowMapping] = React.useState(false)
+    const [showEventsData, setShowEventsData] = React.useState(false)
 
     const {
         players,
@@ -610,6 +611,69 @@ function AdminContent() {
                                         ))}
                                     </div>
                                 )}
+
+                                <div className="mt-8 space-y-6">
+                                    <div className="flex items-center justify-between border-b border-white/10 pb-4">
+                                        <h3 className="text-xl text-white font-black italic uppercase tracking-widest flex items-center gap-3">
+                                            <Settings2 className="w-6 h-6 text-indigo-400" />
+                                            Events Data
+                                        </h3>
+                                        <button
+                                            onClick={() => setShowEventsData(prev => !prev)}
+                                            className="px-4 py-2 bg-slate-800/50 border border-white/10 rounded-lg text-sm font-bold uppercase tracking-wider text-white hover:bg-slate-700/70 transition-colors"
+                                        >
+                                            {showEventsData ? 'Hide Data' : 'Show Data'}
+                                        </button>
+                                    </div>
+
+                                    <AnimatePresence>
+                                        {showEventsData && (
+                                            <motion.div
+                                                initial={{ opacity: 0, height: 0 }}
+                                                animate={{ opacity: 1, height: 'auto' }}
+                                                exit={{ opacity: 0, height: 0 }}
+                                                className="overflow-hidden"
+                                            >
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-6">
+                                                    {[
+                                                        { type: 'chance', title: 'Chance Events', icon: AlertCircle, color: 'amber' },
+                                                        { type: 'quiz', title: 'Quiz Events', icon: BrainCircuit, color: 'indigo' },
+                                                        { type: 'ladder', title: 'Voltage Surge', icon: Activity, color: 'blue' },
+                                                        { type: 'snake', title: 'Mystery Gift', icon: Gift, color: 'rose' }
+                                                    ].map((event) => (
+                                                        <div key={event.type} className="bg-white/2 border border-white/5 rounded-2xl p-5 space-y-4">
+                                                            <div className="flex items-center gap-3">
+                                                                <div className={`w-8 h-8 rounded-lg bg-${event.color}-500/20 flex items-center justify-center border border-${event.color}-500/30`}>
+                                                                    <event.icon className={`text-${event.color}-400 w-4 h-4`} />
+                                                                </div>
+                                                                <h4 className="text-sm font-black text-white uppercase tracking-wider">{event.title}</h4>
+                                                            </div>
+
+                                                            <div className="space-y-3">
+                                                                {boardConfig.filter(t => t.type === event.type).map(tile => (
+                                                                    <div key={tile.id} className="space-y-1.5">
+                                                                        <div className="flex items-center justify-between px-1">
+                                                                            <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Tile {tile.id + 1}</span>
+                                                                        </div>
+                                                                        <Input
+                                                                            value={tile.revealText || ''}
+                                                                            onChange={(e) => useGameStore.getState().setTileConfig(tile.id, { revealText: e.target.value })}
+                                                                            className="h-10 bg-white/5 border-white/5 text-white font-bold text-xs placeholder:text-slate-700"
+                                                                            placeholder="Enter reveal text..."
+                                                                        />
+                                                                    </div>
+                                                                ))}
+                                                                {boardConfig.filter(t => t.type === event.type).length === 0 && (
+                                                                    <p className="text-[10px] text-slate-600 italic uppercase font-bold text-center py-2">No tiles assigned</p>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </motion.div>
+                                        )}
+                                    </AnimatePresence>
+                                </div>
 
                             </div>
                         </motion.div>

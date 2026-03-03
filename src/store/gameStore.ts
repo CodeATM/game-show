@@ -7,6 +7,7 @@ import {
     GIFT_EVENTS,
     type ChanceEvent
 } from '@/data/gameData'
+import { AlertCircle, BrainCircuit, Activity, Gift } from 'lucide-react'
 
 interface Player {
     id: number
@@ -25,6 +26,7 @@ export interface TileConfig {
     id: number
     type: 'normal' | 'chance' | 'quiz' | 'snake' | 'ladder'
     label?: string
+    revealText?: string
     bgColor?: string
 }
 
@@ -89,19 +91,19 @@ interface GameState {
     resetGame: () => void
 
     // Chance Actions
-    triggerChance: () => void
+    triggerChance: (tileId?: number) => void
     resetChance: () => void
 
     // Brainiac Actions
-    triggerBrainiac: () => void
+    triggerBrainiac: (tileId?: number) => void
     resetBrainiac: () => void
 
     // Voltage Actions
-    triggerVoltage: () => void
+    triggerVoltage: (tileId?: number) => void
     resetVoltage: () => void
 
     // Gift Actions
-    triggerGift: () => void
+    triggerGift: (tileId?: number) => void
     resetGift: () => void
 
     // Label Actions
@@ -227,10 +229,10 @@ export const useGameStore = create<GameState>()(
                             if (player && player.position > 0) {
                                 const tile = latestState.boardConfig[player.position - 1];
                                 if (tile) {
-                                    if (tile.type === 'chance') latestState.triggerChance();
-                                    if (tile.type === 'quiz') latestState.triggerBrainiac();
-                                    if (tile.type === 'ladder') latestState.triggerVoltage();
-                                    if (tile.type === 'snake') latestState.triggerGift();
+                                    if (tile.type === 'chance') latestState.triggerChance(player.position - 1);
+                                    if (tile.type === 'quiz') latestState.triggerBrainiac(player.position - 1);
+                                    if (tile.type === 'ladder') latestState.triggerVoltage(player.position - 1);
+                                    if (tile.type === 'snake') latestState.triggerGift(player.position - 1);
                                 }
                             }
                         }, 400);
@@ -324,15 +326,29 @@ export const useGameStore = create<GameState>()(
 
             setBoardTheme: (theme) => set({ boardTheme: theme }),
 
-            triggerChance: () => {
-                const { chanceStatus } = get();
+            triggerChance: (tileId) => {
+                const { chanceStatus, boardConfig } = get();
                 if (chanceStatus === 'idle') {
-                    const randomIndex = Math.floor(Math.random() * CHANCE_EVENTS.length)
-                    const selectedEvent = CHANCE_EVENTS[randomIndex]
-                    set({
-                        currentChanceEvent: selectedEvent,
-                        chanceStatus: 'spinning'
-                    })
+                    const tile = tileId !== undefined ? boardConfig.find(t => t.id === tileId) : null;
+                    if (tile?.revealText) {
+                        set({
+                            currentChanceEvent: {
+                                id: Date.now(),
+                                title: "Chance Reveal",
+                                description: tile.revealText,
+                                icon: AlertCircle as any,
+                                color: "from-amber-400 to-orange-600"
+                            },
+                            chanceStatus: 'spinning'
+                        })
+                    } else {
+                        const randomIndex = Math.floor(Math.random() * CHANCE_EVENTS.length)
+                        const selectedEvent = CHANCE_EVENTS[randomIndex]
+                        set({
+                            currentChanceEvent: selectedEvent,
+                            chanceStatus: 'spinning'
+                        })
+                    }
                 } else if (chanceStatus === 'spinning') {
                     set({ chanceStatus: 'revealed' })
                 }
@@ -347,15 +363,29 @@ export const useGameStore = create<GameState>()(
                 }
             },
 
-            triggerBrainiac: () => {
-                const { brainiacStatus } = get();
+            triggerBrainiac: (tileId) => {
+                const { brainiacStatus, boardConfig } = get();
                 if (brainiacStatus === 'idle') {
-                    const randomIndex = Math.floor(Math.random() * BRAINIAC_EVENTS.length)
-                    const selectedEvent = BRAINIAC_EVENTS[randomIndex]
-                    set({
-                        currentBrainiacEvent: selectedEvent,
-                        brainiacStatus: 'thinking'
-                    })
+                    const tile = tileId !== undefined ? boardConfig.find(t => t.id === tileId) : null;
+                    if (tile?.revealText) {
+                        set({
+                            currentBrainiacEvent: {
+                                id: Date.now(),
+                                title: "Quiz Reveal",
+                                description: tile.revealText,
+                                icon: BrainCircuit as any,
+                                color: "from-indigo-400 to-blue-600"
+                            },
+                            brainiacStatus: 'thinking'
+                        })
+                    } else {
+                        const randomIndex = Math.floor(Math.random() * BRAINIAC_EVENTS.length)
+                        const selectedEvent = BRAINIAC_EVENTS[randomIndex]
+                        set({
+                            currentBrainiacEvent: selectedEvent,
+                            brainiacStatus: 'thinking'
+                        })
+                    }
                 } else if (brainiacStatus === 'thinking') {
                     set({ brainiacStatus: 'revealed' })
                 }
@@ -370,15 +400,29 @@ export const useGameStore = create<GameState>()(
                 }
             },
 
-            triggerVoltage: () => {
-                const { voltageStatus } = get();
+            triggerVoltage: (tileId) => {
+                const { voltageStatus, boardConfig } = get();
                 if (voltageStatus === 'idle') {
-                    const randomIndex = Math.floor(Math.random() * VOLTAGE_EVENTS.length)
-                    const selectedEvent = VOLTAGE_EVENTS[randomIndex]
-                    set({
-                        currentVoltageEvent: selectedEvent,
-                        voltageStatus: 'charging'
-                    })
+                    const tile = tileId !== undefined ? boardConfig.find(t => t.id === tileId) : null;
+                    if (tile?.revealText) {
+                        set({
+                            currentVoltageEvent: {
+                                id: Date.now(),
+                                title: "Voltage Reveal",
+                                description: tile.revealText,
+                                icon: Activity as any,
+                                color: "from-blue-400 to-indigo-600"
+                            },
+                            voltageStatus: 'charging'
+                        })
+                    } else {
+                        const randomIndex = Math.floor(Math.random() * VOLTAGE_EVENTS.length)
+                        const selectedEvent = VOLTAGE_EVENTS[randomIndex]
+                        set({
+                            currentVoltageEvent: selectedEvent,
+                            voltageStatus: 'charging'
+                        })
+                    }
                 } else if (voltageStatus === 'charging') {
                     set({ voltageStatus: 'revealed' })
                 }
@@ -393,15 +437,29 @@ export const useGameStore = create<GameState>()(
                 }
             },
 
-            triggerGift: () => {
-                const { giftStatus } = get();
+            triggerGift: (tileId) => {
+                const { giftStatus, boardConfig } = get();
                 if (giftStatus === 'idle') {
-                    const randomIndex = Math.floor(Math.random() * GIFT_EVENTS.length)
-                    const selectedEvent = GIFT_EVENTS[randomIndex]
-                    set({
-                        currentGiftEvent: selectedEvent,
-                        giftStatus: 'shaking'
-                    })
+                    const tile = tileId !== undefined ? boardConfig.find(t => t.id === tileId) : null;
+                    if (tile?.revealText) {
+                        set({
+                            currentGiftEvent: {
+                                id: Date.now(),
+                                title: "Gift Reveal",
+                                description: tile.revealText,
+                                icon: Gift as any,
+                                color: "from-rose-400 to-red-600"
+                            },
+                            giftStatus: 'shaking'
+                        })
+                    } else {
+                        const randomIndex = Math.floor(Math.random() * GIFT_EVENTS.length)
+                        const selectedEvent = GIFT_EVENTS[randomIndex]
+                        set({
+                            currentGiftEvent: selectedEvent,
+                            giftStatus: 'shaking'
+                        })
+                    }
                 } else if (giftStatus === 'shaking') {
                     set({ giftStatus: 'revealed' })
                 }
