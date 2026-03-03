@@ -21,10 +21,16 @@ interface Player {
     color: string
 }
 
-interface TileConfig {
+export interface TileConfig {
     id: number
     type: 'normal' | 'chance' | 'quiz' | 'snake' | 'ladder'
     label?: string
+    bgColor?: string
+}
+
+export interface InputMapping {
+    type: 'keyboard' | 'midi'
+    value: string | number
 }
 
 interface GameState {
@@ -56,6 +62,18 @@ interface GameState {
     activePlayerName: string | null
     gameSessionId: string | null
 
+    // Event Labels
+    eventLabels: {
+        chance: string
+        quiz: string
+        ladder: string
+        snake: string
+    }
+
+    boardTheme: 'light' | 'dark' | 'groups'
+
+    mappings: Record<string, InputMapping | null>
+
     // Actions
     setLastRoll: (value: number) => void
     incrementRollCount: () => void
@@ -85,6 +103,15 @@ interface GameState {
     // Gift Actions
     triggerGift: () => void
     resetGift: () => void
+
+    // Label Actions
+    setEventLabel: (type: 'chance' | 'quiz' | 'ladder' | 'snake', label: string) => void
+
+    // Theme Actions
+    setBoardTheme: (theme: 'light' | 'dark' | 'groups') => void
+
+    // Mappings
+    updateMapping: (actionId: string, mapping: InputMapping | null) => void
 }
 
 export const useGameStore = create<GameState>()(
@@ -125,6 +152,17 @@ export const useGameStore = create<GameState>()(
 
             activePlayerName: null,
             gameSessionId: null,
+
+            eventLabels: {
+                chance: 'Chance',
+                quiz: 'Quiz',
+                ladder: 'Boost',
+                snake: 'Danger',
+            },
+
+            boardTheme: 'dark',
+
+            mappings: {},
 
             setLastRoll: (value) => set({ lastRoll: value }),
             incrementRollCount: () => set((state) => ({ rollCount: state.rollCount + 1 })),
@@ -254,6 +292,13 @@ export const useGameStore = create<GameState>()(
                 gameSessionId: null,
                 isProcessingDice: false,
                 hostOverride: false,
+                eventLabels: {
+                    chance: 'Chance',
+                    quiz: 'Quiz',
+                    ladder: 'Boost',
+                    snake: 'Danger',
+                },
+                boardTheme: 'dark',
             }),
 
             toggleHostOverride: () => set((state) => ({ hostOverride: !state.hostOverride })),
@@ -261,7 +306,7 @@ export const useGameStore = create<GameState>()(
             setEventLocations: (type, tileNumbers) => set((state) => ({
                 boardConfig: state.boardConfig.map(tile => {
                     if (tileNumbers.includes(tile.id + 1)) {
-                        return { ...tile, type, label: type.charAt(0).toUpperCase() + type.slice(1) };
+                        return { ...tile, type, label: state.eventLabels[type] };
                     }
                     if (tile.type === type) {
                         return { ...tile, type: 'normal', label: undefined };
@@ -269,6 +314,15 @@ export const useGameStore = create<GameState>()(
                     return tile;
                 })
             })),
+
+            setEventLabel: (type, label) => set((state) => ({
+                eventLabels: { ...state.eventLabels, [type]: label },
+                boardConfig: state.boardConfig.map(tile =>
+                    tile.type === type ? { ...tile, label } : tile
+                )
+            })),
+
+            setBoardTheme: (theme) => set({ boardTheme: theme }),
 
             triggerChance: () => {
                 const { chanceStatus } = get();
@@ -279,12 +333,6 @@ export const useGameStore = create<GameState>()(
                         currentChanceEvent: selectedEvent,
                         chanceStatus: 'spinning'
                     })
-                    // Auto-reveal after 3 seconds
-                    setTimeout(() => {
-                        if (get().chanceStatus === 'spinning') {
-                            set({ chanceStatus: 'revealed' })
-                        }
-                    }, 3000)
                 } else if (chanceStatus === 'spinning') {
                     set({ chanceStatus: 'revealed' })
                 }
@@ -308,12 +356,6 @@ export const useGameStore = create<GameState>()(
                         currentBrainiacEvent: selectedEvent,
                         brainiacStatus: 'thinking'
                     })
-                    // Auto-reveal after 3 seconds
-                    setTimeout(() => {
-                        if (get().brainiacStatus === 'thinking') {
-                            set({ brainiacStatus: 'revealed' })
-                        }
-                    }, 3000)
                 } else if (brainiacStatus === 'thinking') {
                     set({ brainiacStatus: 'revealed' })
                 }
@@ -337,12 +379,6 @@ export const useGameStore = create<GameState>()(
                         currentVoltageEvent: selectedEvent,
                         voltageStatus: 'charging'
                     })
-                    // Auto-reveal after 3.5 seconds (battery fill animation is 3s)
-                    setTimeout(() => {
-                        if (get().voltageStatus === 'charging') {
-                            set({ voltageStatus: 'revealed' })
-                        }
-                    }, 3500)
                 } else if (voltageStatus === 'charging') {
                     set({ voltageStatus: 'revealed' })
                 }
@@ -366,12 +402,6 @@ export const useGameStore = create<GameState>()(
                         currentGiftEvent: selectedEvent,
                         giftStatus: 'shaking'
                     })
-                    // Auto-reveal after 3 seconds
-                    setTimeout(() => {
-                        if (get().giftStatus === 'shaking') {
-                            set({ giftStatus: 'revealed' })
-                        }
-                    }, 3000)
                 } else if (giftStatus === 'shaking') {
                     set({ giftStatus: 'revealed' })
                 }
@@ -385,6 +415,13 @@ export const useGameStore = create<GameState>()(
                     set({ currentGiftEvent: null });
                 }
             },
+
+            updateMapping: (actionId, mapping) => set((state) => ({
+                mappings: {
+                    ...state.mappings,
+                    [actionId]: mapping
+                }
+            }))
         }),
         {
             name: 'game-storage',

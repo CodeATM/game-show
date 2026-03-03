@@ -15,9 +15,18 @@ import {
     Plus,
     Minus,
     ToggleLeft,
-    ToggleRight
+    ToggleRight,
+    Sun,
+    Moon,
+    Layers,
+    Settings2,
+    Keyboard,
+    Music,
+    X
 } from 'lucide-react'
-import { useGameStore } from '@/store/gameStore'
+import { useGameStore, type TileConfig } from '@/store/gameStore'
+import { useInputController } from '@/hooks/useInputController'
+import { AnimatePresence } from 'framer-motion'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
@@ -32,9 +41,14 @@ interface AdminControlProps {
     onReset: () => void
     tileNumbers: number[]
     onUpdateLocations: (nums: number[]) => void
+    hostOverride: boolean
+    label: string
+    onUpdateLabel: (val: string) => void
+    boardConfig: TileConfig[]
+    onUpdateTileLabel: (id: number, val: string) => void
 }
 
-function AdminControl({ title, description, status, icon: Icon, color, onTrigger, onReset, tileNumbers, onUpdateLocations }: AdminControlProps) {
+function AdminControl({ title, description, status, icon: Icon, color, onTrigger, onReset, tileNumbers, onUpdateLocations, hostOverride, label, onUpdateLabel, boardConfig, onUpdateTileLabel }: AdminControlProps) {
     const [inputValue, setInputValue] = React.useState(tileNumbers.join(', '))
 
     React.useEffect(() => {
@@ -83,21 +97,61 @@ function AdminControl({ title, description, status, icon: Icon, color, onTrigger
                         placeholder="e.g. 5, 12, 45..."
                     />
                 </div>
+
+                <div className="space-y-1.5">
+                    <span className="text-[8px] font-black text-slate-600 uppercase tracking-widest ml-1">Board Label</span>
+                    <Input
+                        value={label}
+                        onChange={(e) => onUpdateLabel(e.target.value)}
+                        className="h-10 bg-white/5 border-white/5 text-white font-bold text-xs placeholder:text-slate-700"
+                        placeholder="e.g. Boost, Danger..."
+                    />
+                </div>
+
+                <div className="space-y-1.5 flex-1 min-h-0">
+                    <span className="text-[8px] font-black text-slate-600 uppercase tracking-widest ml-1">Individual Tile Overrides</span>
+                    <div className="h-[120px] w-full rounded-xl border border-white/5 bg-white/2 p-2 overflow-y-auto custom-scrollbar">
+                        <div className="space-y-2">
+                            {tileNumbers.map(num => {
+                                const tile = boardConfig.find(t => t.id === num - 1);
+                                return (
+                                    <div key={num} className="flex items-center gap-2 bg-white/5 p-1.5 rounded-lg border border-white/5">
+                                        <div className="w-6 h-6 rounded bg-indigo-500/20 flex items-center justify-center border border-indigo-500/30">
+                                            <span className="text-[9px] font-black text-indigo-400">{num}</span>
+                                        </div>
+                                        <Input
+                                            value={tile?.label || ''}
+                                            onChange={(e) => onUpdateTileLabel(num - 1, e.target.value)}
+                                            className="h-7 bg-transparent border-none text-[10px] font-bold text-white placeholder:text-slate-700 p-0 px-1 focus-visible:ring-0"
+                                            placeholder="Label..."
+                                        />
+                                    </div>
+                                );
+                            })}
+                            {tileNumbers.length === 0 && (
+                                <div className="h-full flex items-center justify-center py-4">
+                                    <span className="text-[9px] font-bold text-slate-600 uppercase tracking-widest italic">No tiles assigned</span>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <div className="grid grid-cols-2 gap-3 mt-6">
                 <Button
                     onClick={onTrigger}
-                    disabled={status === 'revealed'}
-                    className="h-12 bg-white/10 hover:bg-white/20 border-white/5 text-white font-black uppercase tracking-widest text-[10px] gap-2 rounded-xl"
+                    disabled={(status === 'idle' && !hostOverride) || (status === 'revealed' && !hostOverride)}
+                    className="h-12 bg-white/10 hover:bg-white/20 border-white/5 text-white font-black uppercase tracking-widest text-[10px] gap-2 rounded-xl disabled:opacity-20 disabled:cursor-not-allowed"
                 >
                     <Play className="w-3.5 h-3.5" />
                     {status === 'idle' ? 'Trigger' : 'Reveal'}
                 </Button>
                 <Button
                     onClick={onReset}
+                    disabled={status === 'idle' && !hostOverride}
                     variant="ghost"
-                    className="h-12 border border-white/5 text-slate-400 hover:text-red-400 hover:bg-red-400/5 font-black uppercase tracking-widest text-[10px] gap-2 rounded-xl"
+                    className="h-12 border border-white/5 text-slate-400 hover:text-red-400 hover:bg-red-400/5 font-black uppercase tracking-widest text-[10px] gap-2 rounded-xl disabled:opacity-20 disabled:cursor-not-allowed"
                 >
                     <RotateCcw className="w-3.5 h-3.5" />
                     Reset
@@ -211,6 +265,9 @@ function PlayerCard({ player, updatePlayerName, updatePlayerPosition, movePlayer
 }
 
 function AdminContent() {
+    useInputController()
+    const [showMapping, setShowMapping] = React.useState(false)
+
     const {
         players,
         updatePlayerName,
@@ -221,12 +278,83 @@ function AdminContent() {
         toggleHostOverride,
         boardConfig,
         setEventLocations,
+        eventLabels,
+        setEventLabel,
+        boardTheme,
+        setBoardTheme,
         chanceStatus, triggerChance, resetChance,
         brainiacStatus, triggerBrainiac, resetBrainiac,
         voltageStatus, triggerVoltage, resetVoltage,
         giftStatus, triggerGift, resetGift,
-        resetGame
+        resetGame,
+        mappings,
+        updateMapping
     } = useGameStore()
+
+    const [showAdvanced, setShowAdvanced] = React.useState(false)
+    const [recording, setRecording] = React.useState<{ actionId: string, type: 'keyboard' | 'midi' } | null>(null)
+
+    React.useEffect(() => {
+        if (!recording) return
+
+        if (recording.type === 'keyboard') {
+            const handleKeyDown = (e: KeyboardEvent) => {
+                e.preventDefault()
+                let key = e.key.toLowerCase()
+                if (key === ' ') key = 'space'
+                updateMapping(recording.actionId, { type: 'keyboard', value: key })
+                setRecording(null) // Stop recording immediately
+            }
+            window.addEventListener('keydown', handleKeyDown)
+            return () => window.removeEventListener('keydown', handleKeyDown)
+        } else if (recording.type === 'midi') {
+            const handleMidi = (e: Event) => {
+                const message = e as MIDIMessageEvent
+                if (!message.data) return
+                const [command, note, velocity] = message.data
+                const isNoteOn = command >= 144 && command <= 159
+                if (isNoteOn && velocity > 0) {
+                    updateMapping(recording.actionId, { type: 'midi', value: note })
+                    setRecording(null) // Stop recording immediately
+                }
+            }
+
+            let cleanup: (() => void) | null = null;
+            if (navigator.requestMIDIAccess) {
+                navigator.requestMIDIAccess().then(access => {
+                    const inputs = access.inputs.values()
+                    for (let input = inputs.next(); input && !input.done; input = inputs.next()) {
+                        input.value.addEventListener('midimessage', handleMidi)
+                    }
+                    cleanup = () => {
+                        const inputsToClean = access.inputs.values()
+                        for (let input = inputsToClean.next(); input && !input.done; input = inputsToClean.next()) {
+                            input.value.removeEventListener('midimessage', handleMidi)
+                        }
+                    }
+                })
+            }
+            return () => { if (cleanup) cleanup() }
+        }
+    }, [recording, updateMapping])
+
+    const ACTIONS = [
+        { id: 'roll_1', label: 'Roll 1 (Active Player)' },
+        { id: 'roll_2', label: 'Roll 2 (Active Player)' },
+        { id: 'roll_3', label: 'Roll 3 (Active Player)' },
+        { id: 'roll_4', label: 'Roll 4 (Active Player)' },
+        { id: 'roll_5', label: 'Roll 5 (Active Player)' },
+        { id: 'roll_6', label: 'Roll 6 (Active Player)' },
+        { id: 'trigger_chance', label: 'Trigger Chance' },
+        { id: 'reset_chance', label: 'Reset Chance' },
+        { id: 'trigger_quiz', label: 'Trigger Quiz' },
+        { id: 'reset_quiz', label: 'Reset Quiz' },
+        { id: 'trigger_ladder', label: 'Trigger Voltage' },
+        { id: 'reset_ladder', label: 'Reset Voltage' },
+        { id: 'trigger_snake', label: 'Trigger Gift' },
+        { id: 'reset_snake', label: 'Reset Gift' },
+        { id: 'hard_reset', label: 'Hard Reset Game' },
+    ]
 
     return (
         <div className="min-h-screen w-full relative flex flex-col bg-slate-950 font-sans overflow-x-hidden">
@@ -277,6 +405,39 @@ function AdminContent() {
                             </div>
                         </div>
                         <div className="flex items-center gap-4">
+                            {/* Theme Toggle */}
+                            <div className="flex items-center bg-white/5 rounded-xl p-1 border border-white/5">
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => setBoardTheme('light')}
+                                    className={`h-8 px-3 rounded-lg gap-2 transition-all ${boardTheme === 'light' ? 'bg-white text-slate-950 shadow-lg' : 'text-slate-500 hover:text-white'}`}
+                                >
+                                    <Sun className="w-3.5 h-3.5" />
+                                    <span className="text-[10px] font-black uppercase tracking-widest">Light</span>
+                                </Button>
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => setBoardTheme('dark')}
+                                    className={`h-8 px-3 rounded-lg gap-2 transition-all ${boardTheme === 'dark' ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-500 hover:text-white'}`}
+                                >
+                                    <Moon className="w-3.5 h-3.5" />
+                                    <span className="text-[10px] font-black uppercase tracking-widest">Dark</span>
+                                </Button>
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => setBoardTheme('groups')}
+                                    className={`h-8 px-3 rounded-lg gap-2 transition-all ${boardTheme === 'groups' ? 'bg-emerald-500 text-white shadow-lg' : 'text-slate-500 hover:text-white'}`}
+                                >
+                                    <Layers className="w-3.5 h-3.5" />
+                                    <span className="text-[10px] font-black uppercase tracking-widest">Zones</span>
+                                </Button>
+                            </div>
+
+                            <div className="h-8 w-px bg-white/5" />
+
                             <Button
                                 onClick={toggleHostOverride}
                                 variant="outline"
@@ -319,6 +480,11 @@ function AdminContent() {
                         onReset={resetChance}
                         tileNumbers={boardConfig.filter(t => t.type === 'chance').map(t => t.id + 1)}
                         onUpdateLocations={(nums) => setEventLocations('chance', nums)}
+                        hostOverride={hostOverride}
+                        label={eventLabels.chance}
+                        onUpdateLabel={(val) => setEventLabel('chance', val)}
+                        boardConfig={boardConfig}
+                        onUpdateTileLabel={(id, val) => useGameStore.getState().setTileConfig(id, { label: val })}
                     />
                     <AdminControl
                         title="Brainiac Quiz"
@@ -330,6 +496,11 @@ function AdminContent() {
                         onReset={resetBrainiac}
                         tileNumbers={boardConfig.filter(t => t.type === 'quiz').map(t => t.id + 1)}
                         onUpdateLocations={(nums) => setEventLocations('quiz', nums)}
+                        hostOverride={hostOverride}
+                        label={eventLabels.quiz}
+                        onUpdateLabel={(val) => setEventLabel('quiz', val)}
+                        boardConfig={boardConfig}
+                        onUpdateTileLabel={(id, val) => useGameStore.getState().setTileConfig(id, { label: val })}
                     />
                     <AdminControl
                         title="Voltage Surge"
@@ -341,6 +512,11 @@ function AdminContent() {
                         onReset={resetVoltage}
                         tileNumbers={boardConfig.filter(t => t.type === 'ladder').map(t => t.id + 1)}
                         onUpdateLocations={(nums) => setEventLocations('ladder', nums)}
+                        hostOverride={hostOverride}
+                        label={eventLabels.ladder}
+                        onUpdateLabel={(val) => setEventLabel('ladder', val)}
+                        boardConfig={boardConfig}
+                        onUpdateTileLabel={(id, val) => useGameStore.getState().setTileConfig(id, { label: val })}
                     />
                     <AdminControl
                         title="Mystery Gift"
@@ -352,8 +528,93 @@ function AdminContent() {
                         onReset={resetGift}
                         tileNumbers={boardConfig.filter(t => t.type === 'snake').map(t => t.id + 1)}
                         onUpdateLocations={(nums) => setEventLocations('snake', nums)}
+                        hostOverride={hostOverride}
+                        label={eventLabels.snake}
+                        onUpdateLabel={(val) => setEventLabel('snake', val)}
+                        boardConfig={boardConfig}
+                        onUpdateTileLabel={(id, val) => useGameStore.getState().setTileConfig(id, { label: val })}
                     />
                 </div>
+
+                {/* Advanced Settings Toggle */}
+                <div className="flex justify-center mt-6">
+                    <button
+                        onClick={() => setShowAdvanced(!showAdvanced)}
+                        className="flex items-center gap-2 px-6 py-3 bg-white/5 border border-white/10 rounded-full hover:bg-white/10 transition-colors"
+                    >
+                        <Settings2 className="w-5 h-5 text-slate-400" />
+                        <span className="text-white font-bold tracking-widest uppercase text-sm">
+                            {showAdvanced ? "Hide Advanced Settings" : "Show Advanced Settings"}
+                        </span>
+                    </button>
+                </div>
+
+                {/* Advanced Settings Content */}
+                <AnimatePresence>
+                    {showAdvanced && (
+                        <motion.div
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: 'auto' }}
+                            exit={{ opacity: 0, height: 0 }}
+                            className="overflow-hidden mt-6"
+                        >
+                            <div className="bg-slate-900/40 backdrop-blur-md border border-white/5 rounded-3xl p-8">
+                                <h3 className="text-xl text-white font-black italic uppercase tracking-widest mb-6 border-b border-white/10 pb-4">Command Mapping</h3>
+                                {/* Nested toggle for mapping list */}
+                                <button
+                                    onClick={() => setShowMapping(prev => !prev)}
+                                    className="mb-3 px-4 py-2 bg-slate-800/50 border border-white/10 rounded-lg text-sm font-bold uppercase tracking-wider text-white hover:bg-slate-700/70 transition-colors"
+                                >
+                                    {showMapping ? 'Hide Mappings' : 'Show Mappings'}
+                                </button>
+                                {showMapping && (
+                                    <div className="space-y-3">
+                                        {ACTIONS.map(action => (
+                                            <div key={action.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 bg-white/5 border border-white/5 rounded-2xl cursor-default transition-colors hover:border-white/10">
+                                                <div className="text-white font-bold uppercase tracking-wider text-sm flex-1">
+                                                    {action.label}
+                                                </div>
+                                                <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                                                    <button
+                                                        onClick={() => setRecording({ actionId: action.id, type: 'keyboard' })}
+                                                        className={`flex items-center justify-center gap-2 px-4 py-2 rounded-lg border transition-colors text-xs font-bold uppercase tracking-widest w-full sm:w-auto ${recording?.actionId === action.id && recording?.type === 'keyboard' ? 'bg-amber-500 text-black border-amber-500' : 'bg-slate-800 text-slate-300 border-white/10 hover:bg-slate-700'}`}
+                                                    >
+                                                        <Keyboard className="w-4 h-4 shrink-0" />
+                                                        {recording?.actionId === action.id && recording?.type === 'keyboard' ? "Press Key..." : "Bind Key"}
+                                                    </button>
+                                                    <button
+                                                        onClick={() => setRecording({ actionId: action.id, type: 'midi' })}
+                                                        className={`flex items-center justify-center gap-2 px-4 py-2 rounded-lg border transition-colors text-xs font-bold uppercase tracking-widest w-full sm:w-auto ${recording?.actionId === action.id && recording?.type === 'midi' ? 'bg-rose-500 text-white border-rose-500' : 'bg-slate-800 text-slate-300 border-white/10 hover:bg-slate-700'}`}
+                                                    >
+                                                        <Music className="w-4 h-4 shrink-0" />
+                                                        {recording?.actionId === action.id && recording?.type === 'midi' ? "Hit Pad..." : "Bind MIDI"}
+                                                    </button>
+
+                                                    {/* Current Mapping Display */}
+                                                    <div className="flex items-center gap-2 sm:min-w-[120px] justify-end mt-2 sm:mt-0">
+                                                        {mappings[action.id] ? (
+                                                            <span className="px-3 py-1 bg-white/10 rounded-md text-slate-300 text-xs font-mono uppercase">
+                                                                {mappings[action.id]?.type}: {mappings[action.id]?.value}
+                                                            </span>
+                                                        ) : (
+                                                            <span className="text-slate-500 text-xs italic uppercase tracking-wider">Unmapped</span>
+                                                        )}
+                                                        {mappings[action.id] && (
+                                                            <button onClick={() => updateMapping(action.id, null)} className="p-1 hover:bg-rose-500/20 rounded text-slate-400 hover:text-rose-400 transition-colors">
+                                                                <X className="w-4 h-4" />
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+
+                            </div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
 
                 {/* Bottom Info Section */}
                 <div className="mt-auto bg-white/5 border border-white/5 rounded-3xl p-8 flex items-center justify-between">

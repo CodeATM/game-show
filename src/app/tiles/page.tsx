@@ -11,16 +11,51 @@ interface TileProps {
     playersOnTile: number[]
     isActiveTile?: boolean
     activeColor?: string
+    theme: 'light' | 'dark' | 'groups'
 }
 
-function Tile({ id, type, label, playersOnTile, isActiveTile, activeColor }: TileProps) {
+function Tile({ id, type, label, playersOnTile, isActiveTile, activeColor, theme }: TileProps) {
     const getStyles = () => {
-        switch (type) {
-            case 'chance': return 'border-amber-400 bg-amber-500/15 text-amber-300 shadow-[0_0_15px_rgba(251,191,36,0.1)]'
-            case 'quiz': return 'border-blue-400 bg-blue-500/15 text-blue-300 shadow-[0_0_15px_rgba(96,165,250,0.1)]'
-            case 'snake': return 'border-rose-400 bg-rose-500/15 text-rose-300 shadow-[0_0_15px_rgba(251,113,133,0.1)]'
-            case 'ladder': return 'border-emerald-400 bg-emerald-500/15 text-emerald-300 shadow-[0_0_15px_rgba(52,211,153,0.1)]'
-            default: return 'border-white/10 bg-slate-900/60 text-slate-400'
+        if (theme === 'dark') {
+            switch (type) {
+                case 'chance': return 'border-amber-400 bg-amber-500/15 text-white shadow-[0_0_15px_rgba(251,191,36,0.1)]'
+                case 'quiz': return 'border-blue-400 bg-blue-500/15 text-white shadow-[0_0_15px_rgba(96,165,250,0.1)]'
+                case 'snake': return 'border-rose-400 bg-rose-500/15 text-white shadow-[0_0_15px_rgba(251,113,133,0.1)]'
+                case 'ladder': return 'border-emerald-400 bg-emerald-500/15 text-white shadow-[0_0_15px_rgba(52,211,153,0.1)]'
+                default: return 'border-white/10 bg-slate-900/60 text-white'
+            }
+        } else if (theme === 'groups') {
+            if (type !== 'normal') {
+                switch (type) {
+                    case 'chance': return 'border-amber-500 bg-amber-600/40 text-black shadow-[0_0_15px_rgba(245,158,11,0.3)]'
+                    case 'quiz': return 'border-blue-500 bg-blue-600/40 text-black shadow-[0_0_15px_rgba(59,130,246,0.3)]'
+                    case 'snake': return 'border-rose-500 bg-rose-600/40 text-black shadow-[0_0_15px_rgba(244,63,94,0.3)]'
+                    case 'ladder': return 'border-emerald-500 bg-emerald-600/40 text-black shadow-[0_0_15px_rgba(16,185,129,0.3)]'
+                }
+            }
+
+            const tileNum = id + 1;
+            let baseStyle = '';
+
+            if (tileNum <= 20) {
+                baseStyle = 'border-[#A8A8A8] bg-[#A8A8A8]/80 text-black shadow-sm';
+            } else if (tileNum <= 50) {
+                baseStyle = 'border-[#FFEF00] bg-[#FFEF00]/80 text-black shadow-sm';
+            } else if (tileNum <= 80) {
+                baseStyle = 'border-[#00FF7F] bg-[#00FF7F]/80 text-black shadow-sm';
+            } else {
+                baseStyle = 'border-[#E26F66] bg-[#E26F66]/80 text-black shadow-sm';
+            }
+
+            return baseStyle;
+        } else {
+            switch (type) {
+                case 'chance': return 'border-amber-300 bg-amber-50 text-black shadow-sm'
+                case 'quiz': return 'border-blue-300 bg-blue-50 text-black shadow-sm'
+                case 'snake': return 'border-rose-300 bg-rose-50 text-black shadow-sm'
+                case 'ladder': return 'border-emerald-300 bg-emerald-50 text-black shadow-sm'
+                default: return 'border-slate-300 bg-white text-black shadow-sm'
+            }
         }
     }
 
@@ -46,8 +81,13 @@ function Tile({ id, type, label, playersOnTile, isActiveTile, activeColor }: Til
     return (
         <motion.div
             whileHover={{ scale: 1.02, backgroundColor: "rgba(255,255,255,0.05)" }}
-            className={`relative flex flex-col items-center justify-center rounded-lg border transition-all duration-300 min-h-0 min-w-0 overflow-hidden ${getStyles()} ${isActiveTile ? 'border-transparent shadow-none' : ''}`}
+            className={`relative flex flex-col items-center justify-center rounded-lg border transition-all duration-300 min-h-0 min-w-0 overflow-hidden backdrop-blur-md ${getStyles()} ${isActiveTile ? 'border-transparent shadow-none' : ''}`}
         >
+            {/* Glass Reflection Overlay */}
+            <div className="absolute inset-0 pointer-events-none rounded-lg z-0" style={{
+                background: 'linear-gradient(135deg, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0.1) 40%, rgba(255,255,255,0) 40.1%, rgba(255,255,255,0) 100%)',
+                boxShadow: 'inset 0px 1px 1px rgba(255,255,255,0.3), inset 0px -1px 2px rgba(0,0,0,0.1)'
+            }} />
             {/* Neon Strip Light Animation */}
             {isActiveTile && (
                 <div className="absolute inset-0 rounded-lg pointer-events-none">
@@ -105,21 +145,29 @@ function Tile({ id, type, label, playersOnTile, isActiveTile, activeColor }: Til
 }
 
 export default function TilesPage() {
-    const { boardConfig, players } = useGameStore()
+    const { boardConfig, players, boardTheme } = useGameStore()
+
+    const isLight = boardTheme === 'light'
+    const isGroups = boardTheme === 'groups'
+    const isLightBg = isLight || isGroups
 
     return (
-        <div className="h-screen w-full relative flex flex-col items-center justify-center bg-[radial-gradient(circle_at_50%_0%,rgba(99,102,241,0.15),transparent_70%)] bg-slate-950 overflow-hidden selection:bg-indigo-500/30 p-2 sm:p-4 md:p-6 lg:p-8">
+        <div className={`h-screen w-full relative flex flex-col items-center justify-center transition-colors duration-700 overflow-hidden selection:bg-indigo-500/30 p-2 sm:p-4 md:p-6 lg:p-8 ${isLightBg
+            ? 'bg-slate-50'
+            : 'bg-[radial-gradient(circle_at_50%_0%,rgba(99,102,241,0.15),transparent_70%)] bg-slate-950'
+            }`}>
 
             {/* Board Container - Centered and scaled to fit 100vh */}
             <div className="w-full h-full max-w-[1600px] flex flex-col items-center justify-center min-h-0 gap-4">
 
                 {/* Start Zone */}
-                <div className="flex items-center gap-4 bg-slate-900/40 backdrop-blur-md border border-white/5 p-4 rounded-2xl w-full max-w-4xl">
+                <div className={`flex items-center gap-4 backdrop-blur-md border p-4 rounded-2xl w-full max-w-4xl transition-all duration-500 ${isLightBg ? 'bg-white border-slate-200 shadow-xl shadow-slate-200/50' : 'bg-slate-900/40 border-white/5'
+                    }`}>
                     <div className="flex flex-col">
-                        <span className="text-[10px] font-black uppercase tracking-[0.2em] text-indigo-400">Paddock</span>
-                        <span className="text-sm font-black text-white italic tracking-tight uppercase">Start Zone</span>
+                        <span className={`text-[10px] font-black uppercase tracking-[0.2em] ${isLightBg ? 'text-indigo-600' : 'text-indigo-400'}`}>Paddock</span>
+                        <span className={`text-sm font-black italic tracking-tight uppercase ${isLightBg ? 'text-slate-900' : 'text-white'}`}>Start Zone</span>
                     </div>
-                    <div className="h-8 w-px bg-white/5 mx-2" />
+                    <div className={`h-8 w-px mx-2 ${isLightBg ? 'bg-slate-200' : 'bg-white/5'}`} />
                     <div className="flex items-center gap-3">
                         {players.filter(p => p.position === 0).length === 0 && (
                             <span className="text-[10px] font-bold text-slate-600 uppercase tracking-widest italic">All units deployed</span>
@@ -142,7 +190,8 @@ export default function TilesPage() {
                     </div>
                 </div>
 
-                <div className="grid grid-cols-10 grid-rows-10 gap-2 p-6 bg-slate-950/40 rounded-3xl border border-white/5 backdrop-blur-md shadow-2xl w-full h-full max-h-[85vh] mx-auto overflow-hidden">
+                <div className={`grid grid-cols-10 grid-rows-10 gap-2 p-6 rounded-3xl border backdrop-blur-md transition-all duration-500 w-full h-full max-h-[85vh] mx-auto overflow-hidden ${isLightBg ? 'bg-white/40 border-slate-200 shadow-2xl shadow-slate-200/20' : 'bg-slate-950/40 border-white/5 shadow-2xl'
+                    }`}>
                     {(() => {
                         const visualTiles = [];
                         for (let y = 0; y < 10; y++) {
@@ -176,6 +225,7 @@ export default function TilesPage() {
                                     playersOnTile={playersOnThisTile}
                                     isActiveTile={isActiveTile}
                                     activeColor={activeColor}
+                                    theme={boardTheme}
                                 />
                             );
                         });
