@@ -57,10 +57,10 @@ export function useInputController() {
                 case 'reset_quiz': store.resetBrainiac(); break;
 
                 case 'trigger_ladder':
-                    if (store.audioFeedbackEnabled) audioManager.play('voltage_hit');
-                    store.triggerVoltage();
+                    if (store.audioFeedbackEnabled) audioManager.play('vantage_hit');
+                    store.triggerVantage();
                     break;
-                case 'reset_ladder': store.resetVoltage(); break;
+                case 'reset_ladder': store.resetVantage(); break;
 
                 case 'trigger_snake': store.triggerGift(); break;
                 case 'reset_snake': store.resetGift(); break;

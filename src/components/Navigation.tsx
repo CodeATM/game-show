@@ -104,14 +104,14 @@ export default function Navigation() {
               Brainiac
             </Link>
             <Link
-              href="/voltage"
-              className={`flex items-center gap-2.5 px-6 py-3 rounded-full text-xs font-black uppercase tracking-widest transition-all ${pathname === '/voltage'
+              href="/vantage"
+              className={`flex items-center gap-2.5 px-6 py-3 rounded-full text-xs font-black uppercase tracking-widest transition-all ${pathname === '/vantage'
                 ? 'bg-amber-600 text-white shadow-lg shadow-amber-500/20'
                 : 'text-slate-400 hover:text-white hover:bg-white/5'
                 }`}
             >
               <Activity className="w-4 h-4" />
-              Voltage
+              Vantage
             </Link>
             <Link
               href="/gift"

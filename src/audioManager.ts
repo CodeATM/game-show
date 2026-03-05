@@ -9,7 +9,7 @@ const AUDIO_FILES = {
     dice_roll: '/audio/dice-roll.mp3',
     chance_trigger: '/audio/chance-trigger.mp3',
     brainiac_reveal: '/audio/brainiac-reveal.mp3',
-    voltage_hit: '/audio/voltage-hit.mp3',
+    vantage_hit: '/audio/voltage-hit.mp3',
     reveal_event: '/audio/reveal-event.mp3',
     // Animation looping sounds
     vantage_animation: '/audio/vantage-animation.mp3',

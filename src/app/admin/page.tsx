@@ -24,7 +24,11 @@ import {
     Music,
     X,
     Volume2,
-    VolumeX
+    VolumeX,
+    Mountain,
+    Telescope,
+    Compass,
+    Search
 } from 'lucide-react'
 import { audioManager } from '@/audioManager'
 import { useGameStore, type TileConfig } from '@/store/gameStore'
@@ -288,7 +292,7 @@ function AdminContent() {
         setBoardTheme,
         chanceStatus, triggerChance, resetChance,
         brainiacStatus, triggerBrainiac, resetBrainiac,
-        voltageStatus, triggerVoltage, resetVoltage,
+        vantageStatus, triggerVantage, resetVantage,
         giftStatus, triggerGift, resetGift,
         resetGame,
         mappings,
@@ -358,8 +362,8 @@ function AdminContent() {
         { id: 'reset_chance', label: 'Reset Chance' },
         { id: 'trigger_quiz', label: 'Trigger Quiz' },
         { id: 'reset_quiz', label: 'Reset Quiz' },
-        { id: 'trigger_ladder', label: 'Trigger Voltage' },
-        { id: 'reset_ladder', label: 'Reset Voltage' },
+        { id: 'trigger_ladder', label: 'Trigger Vantage' },
+        { id: 'reset_ladder', label: 'Reset Vantage' },
         { id: 'trigger_snake', label: 'Trigger Gift' },
         { id: 'reset_snake', label: 'Reset Gift' },
         { id: 'hard_reset', label: 'Hard Reset Game' },
@@ -558,13 +562,13 @@ function AdminContent() {
                         onUpdateTileLabel={(id, val) => useGameStore.getState().setTileConfig(id, { label: val })}
                     />
                     <AdminControl
-                        title="Voltage Surge"
-                        description="Execute a global power surge."
-                        status={voltageStatus}
-                        icon={Activity}
-                        color="blue"
-                        onTrigger={triggerVoltage}
-                        onReset={resetVoltage}
+                        title="Vantage Point"
+                        description="Access the best view of the board."
+                        status={vantageStatus}
+                        icon={Mountain}
+                        color="emerald"
+                        onTrigger={triggerVantage}
+                        onReset={resetVantage}
                         tileNumbers={boardConfig.filter(t => t.type === 'ladder').map(t => t.id + 1)}
                         onUpdateLocations={(nums) => setEventLocations('ladder', nums)}
                         hostOverride={hostOverride}
@@ -693,7 +697,7 @@ function AdminContent() {
                                                     {[
                                                         { type: 'chance', title: 'Chance Events', icon: AlertCircle, color: 'amber' },
                                                         { type: 'quiz', title: 'Quiz Events', icon: BrainCircuit, color: 'indigo' },
-                                                        { type: 'ladder', title: 'Voltage Surge', icon: Activity, color: 'blue' },
+                                                        { type: 'ladder', title: 'Vantage Point', icon: Mountain, color: 'emerald' },
                                                         { type: 'snake', title: 'Mystery Gift', icon: Gift, color: 'rose' }
                                                     ].map((event) => (
                                                         <div key={event.type} className="bg-white/2 border border-white/5 rounded-2xl p-5 space-y-4">

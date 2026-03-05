@@ -108,6 +108,27 @@ function createMenu() {
                     click: () => createWindow('admin')
                 },
                 { type: 'separator' },
+                {
+                    label: 'Open Brainiac Window',
+                    click: () => createWindow('brainiac')
+                },
+                {
+                    label: 'Open Vantage Window',
+                    click: () => createWindow('vantage')
+                },
+                {
+                    label: 'Open Gift Window',
+                    click: () => createWindow('gift')
+                },
+                {
+                    label: 'Open Chance Window',
+                    click: () => createWindow('chance')
+                },
+                {
+                    label: 'Open Stats Window',
+                    click: () => createWindow('stats')
+                },
+                { type: 'separator' },
                 { role: 'minimize' },
                 { role: 'zoom' },
                 { role: 'close' }

@@ -1,5 +1,5 @@
 import type { LucideIcon } from 'lucide-react'
-import { Zap, ArrowRight, Wallet, UserMinus, Repeat, BrainCircuit, Lightbulb, GraduationCap, Activity, ZapOff, ShieldAlert, BatteryCharging } from 'lucide-react'
+import { Zap, ArrowRight, Wallet, UserMinus, Repeat, BrainCircuit, Lightbulb, GraduationCap, Activity, ZapOff, ShieldAlert, BatteryCharging, Mountain, Telescope, Compass, Search } from 'lucide-react'
 
 export interface ChanceEvent {
     id: number
@@ -106,33 +106,33 @@ export const BRAINIAC_EVENTS: ChanceEvent[] = [
     }
 ]
 
-export const VOLTAGE_EVENTS: ChanceEvent[] = [
+export const VANTAGE_EVENTS: ChanceEvent[] = [
     {
         id: 1,
-        title: "Hyper Surge",
+        title: "Peak View",
         description: "All players move forward 5 spaces!",
-        icon: Activity,
-        color: "from-yellow-400 via-orange-500 to-red-600"
+        icon: Mountain,
+        color: "from-emerald-400 via-teal-500 to-cyan-600"
     },
     {
         id: 2,
-        title: "System Overload",
+        title: "Deep Focus",
         description: "The leader loses half their bank balance.",
-        icon: ZapOff,
-        color: "from-red-600 to-slate-900"
+        icon: Telescope,
+        color: "from-blue-600 to-indigo-900"
     },
     {
         id: 3,
-        title: "Static Shield",
+        title: "Clear Path",
         description: "Gain immunity to the next 2 negative events.",
-        icon: ShieldAlert,
+        icon: Compass,
         color: "from-cyan-400 to-blue-500"
     },
     {
         id: 4,
-        title: "Power Drain",
+        title: "Discovery",
         description: "Steal 50 coins from EVERY OTHER player.",
-        icon: BatteryCharging,
+        icon: Search,
         color: "from-purple-500 to-indigo-700"
     }
 ]

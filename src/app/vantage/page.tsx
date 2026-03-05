@@ -1,7 +1,7 @@
 'use client'
 
 import { motion, AnimatePresence } from 'framer-motion'
-import { BatteryCharging, RotateCcw, AlertTriangle, Activity, ZapOff, ShieldAlert } from 'lucide-react'
+import { Mountain, RotateCcw, Compass, Telescope, Search, AlertCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useGameStore } from '@/store/gameStore'
 import { audioManager } from '@/audioManager'
@@ -9,14 +9,14 @@ import { useEffect } from 'react'
 
 // Icon mapping to handle serialization issues
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
-    'Activity': Activity,
-    'ZapOff': ZapOff,
-    'ShieldAlert': ShieldAlert,
-    'BatteryCharging': BatteryCharging,
+    'Mountain': Mountain,
+    'Telescope': Telescope,
+    'Compass': Compass,
+    'Search': Search,
 }
 
-function VoltageContent() {
-    const { voltageStatus, currentVoltageEvent, triggerVoltage, resetVoltage, audioFeedbackEnabled } = useGameStore()
+function VantageContent() {
+    const { vantageStatus, currentVantageEvent, triggerVantage, resetVantage, audioFeedbackEnabled } = useGameStore()
 
     useEffect(() => {
         if (!audioFeedbackEnabled) {
@@ -24,11 +24,11 @@ function VoltageContent() {
             return;
         }
 
-        if (voltageStatus === 'charging') {
+        if (vantageStatus === 'scanning') {
             audioManager.playLoop('vantage_animation');
         } else {
             audioManager.stop('vantage_animation');
-            if (voltageStatus === 'revealed') {
+            if (vantageStatus === 'revealed') {
                 audioManager.play('reveal_event');
             }
         }
@@ -36,18 +36,18 @@ function VoltageContent() {
         return () => {
             audioManager.stop('vantage_animation');
         };
-    }, [voltageStatus, audioFeedbackEnabled]);
+    }, [vantageStatus, audioFeedbackEnabled]);
 
     // Get icon component by name
     const getIconComponent = () => {
-        if (!currentVoltageEvent?.icon) return null
+        if (!currentVantageEvent?.icon) return null
         // If icon is already a component, use it
-        if (typeof currentVoltageEvent.icon === 'function') {
-            return currentVoltageEvent.icon
+        if (typeof currentVantageEvent.icon === 'function') {
+            return currentVantageEvent.icon
         }
         // If icon is serialized, try to get from map
-        const iconName = (currentVoltageEvent.icon as any).name || 'Activity'
-        return iconMap[iconName] || Activity
+        const iconName = (currentVantageEvent.icon as any).name || 'Mountain'
+        return iconMap[iconName] || Mountain
     }
 
     const EventIcon = getIconComponent()
@@ -55,14 +55,14 @@ function VoltageContent() {
     return (
         <div className="h-screen w-full relative flex flex-col items-center justify-center bg-slate-950 overflow-hidden px-8">
 
-            {/* High Voltage Grid Background */}
+            {/* High Vantage Grid Background */}
             <div className="absolute inset-0 opacity-20 pointer-events-none">
-                <div className="absolute inset-0 bg-[linear-gradient(rgba(245,158,11,0.05)_1px,transparent_1px),linear-gradient(90deg,rgba(245,158,11,0.05)_1px,transparent_1px)] bg-size-[40px_40px]" />
-                <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(245,158,11,0.1),transparent_70%)]" />
+                <div className="absolute inset-0 bg-[linear-gradient(rgba(16,185,129,0.05)_1px,transparent_1px),linear-gradient(90deg,rgba(16,185,129,0.05)_1px,transparent_1px)] bg-size-[40px_40px]" />
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(16,185,129,0.1),transparent_70%)]" />
             </div>
 
             <AnimatePresence mode="wait">
-                {voltageStatus !== 'revealed' ? (
+                {vantageStatus !== 'revealed' ? (
                     <motion.div
                         key="hidden-state"
                         initial={{ opacity: 0 }}
@@ -70,30 +70,30 @@ function VoltageContent() {
                         exit={{ opacity: 0, transition: { duration: 0.3 } }}
                         className="flex flex-col items-center gap-12"
                     >
-                        {/* High Voltage Warning Header */}
-                        <div className="flex items-center gap-4 bg-amber-500/10 border border-amber-500/20 px-6 py-2 rounded-full backdrop-blur-md">
-                            <AlertTriangle className="w-5 h-5 text-amber-500 animate-pulse" />
-                            <span className="text-amber-500 text-xs font-black uppercase tracking-widest">High Voltage Danger</span>
+                        {/* High Vantage Warning Header */}
+                        <div className="flex items-center gap-4 bg-emerald-500/10 border border-emerald-500/20 px-6 py-2 rounded-full backdrop-blur-md">
+                            <Compass className="w-5 h-5 text-emerald-500 animate-pulse" />
+                            <span className="text-emerald-500 text-xs font-black uppercase tracking-widest">Vantage Point Vision</span>
                         </div>
 
-                        {/* Battery Container */}
+                        {/* Scan Container */}
                         <div
                             className="relative w-48 h-80 rounded-[2.5rem] border-4 border-slate-800 bg-slate-900/50 p-3 group cursor-pointer"
-                            onClick={() => triggerVoltage()}
+                            onClick={() => triggerVantage()}
                         >
-                            {/* Battery Tip */}
+                            {/* Scanner Tip */}
                             <div className="absolute -top-4 left-1/2 -translate-x-1/2 w-16 h-4 bg-slate-800 rounded-t-lg" />
 
-                            {/* Battery Inner Filling */}
+                            {/* Scanner Inner Filling */}
                             <div className="w-full h-full rounded-[1.8rem] bg-slate-950/80 relative overflow-hidden">
-                                {voltageStatus === 'charging' && (
+                                {vantageStatus === 'scanning' && (
                                     <motion.div
                                         initial={{ height: "0%" }}
                                         animate={{ height: "100%" }}
                                         transition={{ duration: 3, ease: "linear" }}
-                                        className="absolute bottom-0 left-0 w-full bg-linear-to-t from-orange-600 via-amber-500 to-yellow-400 shadow-[0_0_50px_rgba(245,158,11,0.5)]"
+                                        className="absolute bottom-0 left-0 w-full bg-linear-to-t from-emerald-600 via-teal-500 to-cyan-400 shadow-[0_0_50px_rgba(16,185,129,0.5)]"
                                     >
-                                        {/* Electric Arcs effect during charging */}
+                                        {/* Scanner effect during scanning */}
                                         <div className="absolute top-0 left-0 w-full h-1 bg-white blur-[2px] opacity-80" />
                                     </motion.div>
                                 )}
@@ -101,21 +101,21 @@ function VoltageContent() {
                                 {/* Centered Icon */}
                                 <div className="absolute inset-0 flex items-center justify-center z-10">
                                     <motion.div
-                                        animate={voltageStatus === 'charging' ? {
+                                        animate={vantageStatus === 'scanning' ? {
                                             scale: [1, 1.2, 1],
                                             opacity: [0.3, 1, 0.3],
                                         } : {}}
                                         transition={{ duration: 0.5, repeat: Infinity }}
                                     >
-                                        <BatteryCharging className={`w-20 h-20 transition-all duration-500 ${voltageStatus === 'charging' ? 'text-white' : 'text-slate-700 group-hover:text-amber-500'}`} />
+                                        <Mountain className={`w-20 h-20 transition-all duration-500 ${vantageStatus === 'scanning' ? 'text-white' : 'text-slate-700 group-hover:text-emerald-500'}`} />
                                     </motion.div>
                                 </div>
                             </div>
 
-                            {/* Power Indicator Label */}
+                            {/* Scan Indicator Label */}
                             <div className="absolute -right-24 top-1/2 -translate-y-1/2 flex flex-col gap-2">
                                 {[...Array(5)].map((_, i) => (
-                                    <div key={i} className={`w-2 h-8 rounded-full transition-all duration-300 ${voltageStatus === 'charging' ? 'bg-amber-500 animate-pulse' : 'bg-slate-800'}`} style={{ animationDelay: `${i * 0.2}s` }} />
+                                    <div key={i} className={`w-2 h-8 rounded-full transition-all duration-300 ${vantageStatus === 'scanning' ? 'bg-emerald-500 animate-pulse' : 'bg-slate-800'}`} style={{ animationDelay: `${i * 0.2}s` }} />
                                 ))}
                             </div>
                         </div>
@@ -123,10 +123,10 @@ function VoltageContent() {
                         {/* Interaction Prompt */}
                         <div className="text-center">
                             <h2 className="text-2xl font-black text-slate-100 uppercase tracking-tighter mb-2 italic">
-                                {voltageStatus === 'charging' ? 'System Overclocking...' : 'Initiate Power Surge'}
+                                {vantageStatus === 'scanning' ? 'Scanning Vantage...' : 'Access Vantage Point'}
                             </h2>
-                            <p className="text-amber-500/60 font-medium text-xs uppercase tracking-[0.2em]">
-                                {voltageStatus === 'charging' ? 'Keep distance - High energy detected' : 'Click the cell to begin charge'}
+                            <p className="text-emerald-500/60 font-medium text-xs uppercase tracking-[0.2em]">
+                                {vantageStatus === 'scanning' ? 'Keep distance - Analyzing best perspective' : 'Click the point to begin scan'}
                             </p>
                         </div>
                     </motion.div>
@@ -139,28 +139,28 @@ function VoltageContent() {
                         className="w-full max-w-2xl flex flex-col items-center"
                     >
                         {/* Industrial Terminal Reveal */}
-                        <div className={`w-full bg-slate-900 border-t-8 ${currentVoltageEvent?.color.includes('red') ? 'border-red-600 shadow-[0_0_50px_rgba(220,38,38,0.3)]' : 'border-amber-500 shadow-[0_0_50px_rgba(245,158,11,0.3)]'} rounded-[1.5rem] p-1 overflow-hidden`}>
-                            <div className="bg-slate-950 p-12 rounded-[1rem] flex flex-col items-center text-center relative">
+                        <div className={`w-full bg-slate-900 border-t-8 ${currentVantageEvent?.color.includes('red') ? 'border-red-600 shadow-[0_0_50px_rgba(220,38,38,0.3)]' : 'border-emerald-500 shadow-[0_0_50px_rgba(16,185,129,0.3)]'} rounded-[1.5rem] p-1 overflow-hidden`}>
+                            <div className={`bg-slate-950 p-12 rounded-[1rem] flex flex-col items-center text-center relative`}>
 
                                 {/* Background System Scannelines */}
                                 <div className="absolute inset-0 bg-[repeating-linear-gradient(transparent,transparent_2px,rgba(255,255,255,0.02)_2px,rgba(255,255,255,0.02)_4px)] pointer-events-none" />
 
-                                <div className={`w-20 h-20 rounded-2xl bg-linear-to-br ${currentVoltageEvent?.color} flex items-center justify-center mb-8 shadow-2xl rotate-3`}>
+                                <div className={`w-20 h-20 rounded-2xl bg-linear-to-br ${currentVantageEvent?.color} flex items-center justify-center mb-8 shadow-2xl rotate-3`}>
                                     {EventIcon && <EventIcon className="w-10 h-10 text-white" />}
                                 </div>
 
                                 <div className="space-y-4">
                                     <div className="flex items-center justify-center gap-2">
-                                        <Activity className="w-4 h-4 text-slate-500" />
-                                        <span className="text-[10px] text-slate-500 font-bold uppercase tracking-[0.4em]">System Output</span>
-                                        <Activity className="w-4 h-4 text-slate-500" />
+                                        <Telescope className="w-4 h-4 text-slate-500" />
+                                        <span className="text-[10px] text-slate-500 font-bold uppercase tracking-[0.4em]">Vantage Point Output</span>
+                                        <Telescope className="w-4 h-4 text-slate-500" />
                                     </div>
                                     <h2 className="text-6xl font-black text-white tracking-tighter uppercase italic">
-                                        {currentVoltageEvent?.title || 'Power Surge'}
+                                        {currentVantageEvent?.title || 'Vantage Point'}
                                     </h2>
                                     <div className="h-0.5 w-32 bg-slate-800 mx-auto" />
                                     <p className="text-xl text-slate-400 font-medium max-w-md leading-relaxed uppercase tracking-wide">
-                                        {currentVoltageEvent?.description || 'Energy levels stabilizing...'}
+                                        {currentVantageEvent?.description || 'Analyzing best perspective...'}
                                     </p>
                                 </div>
 
@@ -174,11 +174,11 @@ function VoltageContent() {
                         </div>
 
                         <Button
-                            onClick={resetVoltage}
+                            onClick={resetVantage}
                             className="mt-12 bg-white text-slate-950 hover:bg-slate-200 px-12 py-7 rounded-2xl font-black uppercase tracking-tighter text-sm flex items-center gap-3 shadow-2xl"
                         >
                             <RotateCcw className="w-5 h-5" />
-                            Cycle Power Grid
+                            Return to Base
                         </Button>
                     </motion.div>
                 )}
@@ -187,8 +187,8 @@ function VoltageContent() {
     )
 }
 
-export default function VoltagePage() {
+export default function VantagePage() {
     return (
-        <VoltageContent />
+        <VantageContent />
     )
 }

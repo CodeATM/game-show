@@ -119,7 +119,7 @@ export default function ChancePage() {
                             ))}
                         </div>
 
-                        {/* Voltage Icon Core */}
+                        {/* Chance Icon Core */}
                         <motion.div
                             animate={chanceStatus === 'spinning' ? {
                                 scale: [1, 1.2, 0.9, 1.3],

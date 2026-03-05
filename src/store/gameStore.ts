@@ -3,11 +3,11 @@ import { persist } from 'zustand/middleware'
 import {
     CHANCE_EVENTS,
     BRAINIAC_EVENTS,
-    VOLTAGE_EVENTS,
+    VANTAGE_EVENTS,
     GIFT_EVENTS,
     type ChanceEvent
 } from '@/data/gameData'
-import { AlertCircle, BrainCircuit, Activity, Gift } from 'lucide-react'
+import { AlertCircle, BrainCircuit, Mountain, Gift } from 'lucide-react'
 
 interface Player {
     id: number
@@ -52,9 +52,9 @@ interface GameState {
     brainiacStatus: 'idle' | 'thinking' | 'revealed'
     currentBrainiacEvent: ChanceEvent | null
 
-    // Voltage State
-    voltageStatus: 'idle' | 'charging' | 'revealed'
-    currentVoltageEvent: ChanceEvent | null
+    // Vantage State
+    vantageStatus: 'idle' | 'scanning' | 'revealed'
+    currentVantageEvent: ChanceEvent | null
 
     // Gift State
     giftStatus: 'idle' | 'shaking' | 'revealed'
@@ -102,9 +102,9 @@ interface GameState {
     triggerBrainiac: (tileId?: number) => void
     resetBrainiac: () => void
 
-    // Voltage Actions
-    triggerVoltage: (tileId?: number) => void
-    resetVoltage: () => void
+    // Vantage Actions
+    triggerVantage: (tileId?: number) => void
+    resetVantage: () => void
 
     // Gift Actions
     triggerGift: (tileId?: number) => void
@@ -155,8 +155,8 @@ export const useGameStore = create<GameState>()(
             brainiacStatus: 'idle',
             currentBrainiacEvent: null,
 
-            voltageStatus: 'idle',
-            currentVoltageEvent: null,
+            vantageStatus: 'idle',
+            currentVantageEvent: null,
 
             giftStatus: 'idle',
             currentGiftEvent: null,
@@ -244,7 +244,7 @@ export const useGameStore = create<GameState>()(
                                 if (tile) {
                                     if (tile.type === 'chance') latestState.triggerChance(player.position - 1);
                                     if (tile.type === 'quiz') latestState.triggerBrainiac(player.position - 1);
-                                    if (tile.type === 'ladder') latestState.triggerVoltage(player.position - 1);
+                                    if (tile.type === 'ladder') latestState.triggerVantage(player.position - 1);
                                     if (tile.type === 'snake') latestState.triggerGift(player.position - 1);
                                 }
                             }
@@ -299,8 +299,8 @@ export const useGameStore = create<GameState>()(
                 currentChanceEvent: null,
                 brainiacStatus: 'idle',
                 currentBrainiacEvent: null,
-                voltageStatus: 'idle',
-                currentVoltageEvent: null,
+                vantageStatus: 'idle',
+                currentVantageEvent: null,
                 giftStatus: 'idle',
                 currentGiftEvent: null,
                 activePlayerName: null,
@@ -413,40 +413,40 @@ export const useGameStore = create<GameState>()(
                 }
             },
 
-            triggerVoltage: (tileId) => {
-                const { voltageStatus, boardConfig } = get();
-                if (voltageStatus === 'idle') {
+            triggerVantage: (tileId) => {
+                const { vantageStatus, boardConfig } = get();
+                if (vantageStatus === 'idle') {
                     const tile = tileId !== undefined ? boardConfig.find(t => t.id === tileId) : null;
                     if (tile?.revealText) {
                         set({
-                            currentVoltageEvent: {
+                            currentVantageEvent: {
                                 id: Date.now(),
-                                title: "Voltage Reveal",
+                                title: "Vantage Reveal",
                                 description: tile.revealText,
-                                icon: Activity as any,
+                                icon: Mountain as any,
                                 color: "from-blue-400 to-indigo-600"
                             },
-                            voltageStatus: 'charging'
+                            vantageStatus: 'scanning'
                         })
                     } else {
-                        const randomIndex = Math.floor(Math.random() * VOLTAGE_EVENTS.length)
-                        const selectedEvent = VOLTAGE_EVENTS[randomIndex]
+                        const randomIndex = Math.floor(Math.random() * VANTAGE_EVENTS.length)
+                        const selectedEvent = VANTAGE_EVENTS[randomIndex]
                         set({
-                            currentVoltageEvent: selectedEvent,
-                            voltageStatus: 'charging'
+                            currentVantageEvent: selectedEvent,
+                            vantageStatus: 'scanning'
                         })
                     }
-                } else if (voltageStatus === 'charging') {
-                    set({ voltageStatus: 'revealed' })
+                } else if (vantageStatus === 'scanning') {
+                    set({ vantageStatus: 'revealed' })
                 }
             },
 
-            resetVoltage: () => {
-                const { voltageStatus } = get();
-                if (voltageStatus === 'revealed') {
-                    set({ voltageStatus: 'idle' });
+            resetVantage: () => {
+                const { vantageStatus } = get();
+                if (vantageStatus === 'revealed') {
+                    set({ vantageStatus: 'idle' });
                 } else {
-                    set({ currentVoltageEvent: null });
+                    set({ currentVantageEvent: null });
                 }
             },
 
