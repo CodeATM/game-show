@@ -3,12 +3,33 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
+  "main": "main.js",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "preview": "next start"
+    "preview": "next start",
+    "electron:dev": "electron .",
+    "dist": "next build && electron-builder"
+  },
+  "build": {
+    "appId": "com.gameshow.desktop",
+    "productName": "Game Show",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "out/**/*"
+    ],
+    "win": {
+      "target": "nsis"
+    },
+    "mac": {
+      "target": "dmg"
+    }
   },
   "dependencies": {
     "@radix-ui/react-dialog": "^1.1.15",
@@ -19,6 +40,7 @@
     "@tailwindcss/vite": "^4.2.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "electron-serve": "^3.0.1",
     "framer-motion": "^12.34.2",
     "lucide-react": "^0.574.0",
     "modern-react-dice-roll": "^1.0.0",
@@ -39,6 +61,8 @@
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^5.1.1",
     "babel-plugin-react-compiler": "^1.0.0",
+    "electron": "^40.6.1",
+    "electron-builder": "^26.8.1",
     "eslint": "^9.39.1",
     "eslint-config-next": "^16.1.6",
     "eslint-plugin-react-hooks": "^7.0.1",
